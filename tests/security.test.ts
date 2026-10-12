@@ -155,7 +155,7 @@ describe("Telegram review flow (E2, E3, E4)", () => {
     expect(await handleUpdate(text("Too late. Two sentences."), later)).toBe("ignored: no pending action");
   });
 
-  it("Swap uses the reserves and keeps the position; Reject removes and warns below 8 stories", async () => {
+  it("Swap uses the reserves and keeps the position; Reject at 8 stories brings in a reserve to keep 8", async () => {
     const issue = await makeDraft({ n: 8, reserves: 2 });
     const stories = await getStories(issue.id);
     const reserves = await getStories(issue.id, ["reserve"]);
@@ -165,14 +165,24 @@ describe("Telegram review flow (E2, E3, E4)", () => {
     expect(reserves.map((r) => r.id)).toContain(after[3].id);
     expect((await sql`SELECT state FROM issue_stories WHERE id = ${stories[3].id}`)[0].state).toBe("swapped_out");
 
-    expect(await handleUpdate(callback(`r:${stories[0].id}`))).toBe("story rejected");
+    expect(await handleUpdate(callback(`r:${stories[0].id}`))).toBe("story rejected, replacement added");
     expect((await sql`SELECT state FROM issue_stories WHERE id = ${stories[0].id}`)[0].state).toBe("rejected");
     const remaining = await getStories(issue.id);
-    expect(remaining).toHaveLength(7);
-    expect(remaining.map((s) => s.position)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(remaining).toHaveLength(8);
+    expect(remaining.map((s) => s.position)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(calls.telegram.some((c) => /To keep 8 stories/.test(c.body.text ?? ""))).toBe(true);
+  });
+
+  it("when no reserves or candidates are left, a reject leaves the draft short and it can't be confirmed", async () => {
+    const issue = await makeDraft({ n: 8, reserves: 0 });
+    const [s1] = await getStories(issue.id);
+    expect(await handleUpdate(callback(`r:${s1.id}`))).toBe("story rejected");
+    expect(await getStories(issue.id)).toHaveLength(7);
     const warn = calls.telegram.find((c) => /only 7 stories/.test(c.body.text ?? ""));
-    expect(warn).toBeTruthy();
     expect(JSON.stringify(warn!.body.reply_markup)).toMatch(/Swap one in/);
+    expect(await handleUpdate(callback(`a:${issue.id}`), WED_2159)).toMatch(/approve: blocked/);
+    expect(await handleUpdate(callback(`ay:${issue.id}`), WED_2159)).toMatch(/approve refused/);
+    expect((await issueStatus(issue.id)).status).toBe("pending_approval");
   });
 
   it("Approve asks for confirmation, then stores status, time and channel", async () => {
@@ -188,11 +198,19 @@ describe("Telegram review flow (E2, E3, E4)", () => {
     expect(new Date(row.approved_at).toISOString()).toBe(WED_2159.toISOString());
   });
 
-  it("approving with fewer than 8 stories warns but is allowed", async () => {
+  it("a draft with fewer than 8 stories or 3 topics can't be confirmed (brief: 8–10 stories, 3+ topics)", async () => {
     const issue = await makeDraft({ n: 6, topics: 2 });
-    await handleUpdate(callback(`a:${issue.id}`));
-    expect(calls.telegram.some((c) => /only 6 stories/.test(c.body.text ?? "") && /only 2 topic/.test(c.body.text ?? ""))).toBe(true);
+    expect(await handleUpdate(callback(`a:${issue.id}`), WED_2159)).toMatch(/approve: blocked/);
+    expect(calls.telegram.some((c) => /can't be confirmed yet/.test(c.body.text ?? "") && /only 6 stories/.test(c.body.text ?? "") && /only 2 topic/.test(c.body.text ?? ""))).toBe(true);
     const r = await approveIssue(issue.id, "telegram", WED_2159);
-    expect(r.ok).toBe(true);
+    expect(r.ok).toBe(false);
+    expect((await issueStatus(issue.id)).status).toBe("pending_approval");
+  });
+
+  it("8 stories but only 2 topics can't be confirmed either", async () => {
+    const issue = await makeDraft({ n: 8, topics: 2 });
+    const r = await approveIssue(issue.id, "dashboard", WED_2159);
+    expect(r.ok).toBe(false);
+    expect(r.message).toMatch(/only 2 topic/);
   });
 });

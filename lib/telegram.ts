@@ -240,11 +240,14 @@ async function handleCallback(cb: any, at: Date): Promise<string> {
       case "r": {
         const r = await rejectStory(id, "telegram");
         await answer(cb.id, "Story removed");
-        const warn = r.health.warnings.length ? `\n⚠️ The draft now has ${r.health.warnings.join(" and ")}. Consider swapping a story back in.` : "";
-        await send(`❌ Removed “${esc(r.story.title)}”. ${r.health.count} stories across ${r.health.topics.length} topics remain.${warn}`,
+        const warn = r.health.warnings.length ? `\n⚠️ The draft has ${r.health.warnings.join(" and ")} — it needs 8–10 stories across 3+ topics before you can confirm it.` : "";
+        await send(`❌ Removed “${esc(r.story.title)}”. ${r.health.count} stories across ${r.health.topics.length} topics.${warn}`,
           r.health.warnings.length ? [[{ text: "🔄 Swap one in", callback_data: `u:${r.story.issue_id}` }]] : undefined);
+        if (r.replacement) {
+          await send(`➕ To keep 8 stories, this one came in from the reserves:\n\n${storyText(r.replacement)}`, storyKeyboard(r.replacement));
+        }
         await revokedNote(r.revoked);
-        return "story rejected";
+        return r.replacement ? "story rejected, replacement added" : "story rejected";
       }
       case "u": {
         const r = await addReplacement(id, "telegram");
@@ -258,11 +261,15 @@ async function handleCallback(cb: any, at: Date): Promise<string> {
         const stories = issue ? await getStories(id) : [];
         const h = draftHealth(stories);
         await answer(cb.id);
+        if (h.warnings.length) {
+          await send(`⚠️ Issue #${issue?.issue_number} can't be confirmed yet: it has ${h.warnings.join(" and ")}. The newsletter needs 8–10 stories across at least 3 topics.`,
+            [[{ text: "🔄 Swap one in", callback_data: `u:${id}` }]]);
+          return "approve: blocked (draft outside 8–10 stories / 3 topics)";
+        }
         const pending = stories.filter((s) => !s.approved_at).map((s) => s.position);
         await send(
           `Approve issue #${issue?.issue_number} with ${h.count} stories for Thursday 8 AM?` +
-          `\n${h.approved} of ${h.count} stories approved individually${pending.length ? ` — confirming also approves ${pending.length === 1 ? "story" : "stories"} ${pending.join(", ")}` : ""}.` +
-          `${h.warnings.length ? `\n⚠️ Note: ${h.warnings.join("; ")}. You can still approve — it's your call.` : ""}`,
+          `\n${h.approved} of ${h.count} stories approved individually${pending.length ? ` — confirming also approves ${pending.length === 1 ? "story" : "stories"} ${pending.join(", ")}` : ""}.`,
           [[{ text: "Yes, approve", callback_data: `ay:${id}` }, { text: "No", callback_data: `an:${id}` }]],
         );
         return "approve: confirm asked";

@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       }
       case "story_reject": {
         const r = await rejectStory(Number(form.get("story_id")), "dashboard");
-        message = `Story removed. ${r.health.count} stories, ${r.health.topics.length} topics${r.health.warnings.length ? ` — ${r.health.warnings.join("; ")}` : ""}.${r.revoked ? " Approval was revoked." : ""}`;
+        message = `Story removed.${r.replacement ? ` “${r.replacement.title}” came in from the reserves to keep 8 stories.` : ""} ${r.health.count} stories, ${r.health.topics.length} topics${r.health.warnings.length ? ` — ${r.health.warnings.join("; ")}; swap a story in before confirming` : ""}.${r.revoked ? " Approval was revoked." : ""}`;
         anchor = "draft"; break;
       }
       case "approve": {

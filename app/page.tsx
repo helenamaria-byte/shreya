@@ -90,12 +90,15 @@ function Workflow({ d }: { d: D }) {
 const T = (x: number, y: number, r: number) => ({ x: `${x}%`, y: `${y}%`, r: `${r}deg`, sx: `${50 + (x - 50) * 2.6}%`, sy: `${50 + (y - 50) * 2.6}%` });
 const SPOTS_6 = [T(17, 23, -5), T(50, 18, 2), T(83, 23, 5), T(17, 77, 3), T(50, 82, -2), T(83, 77, -4)];
 const SPOTS_8 = [T(14, 23, -5), T(38, 18, 2), T(62, 18, -2), T(86, 23, 5), T(14, 77, 3), T(38, 82, -2), T(62, 82, 2), T(86, 77, -4)];
+const SPOTS_10 = [T(10, 24, -5), T(30, 18, 3), T(50, 15, -2), T(70, 18, 2), T(90, 24, 5), T(10, 76, 3), T(30, 82, -3), T(50, 85, 2), T(70, 82, -2), T(90, 76, -4)];
 
 function Overview({ d }: { d: D }) {
   const o = d.overview;
-  const topics = [...new Set(d.stories.map((s) => s.topic ?? "Other"))];
-  const shown = (topics.length ? topics : TOPICS.filter((t) => t !== "Other").slice(0, 6)).slice(0, 8);
-  const spots = shown.length <= 6 ? SPOTS_6 : SPOTS_8;
+  // One picture per story in the draft (8–10); before the draft exists, a few topic pictures.
+  const shown = d.stories.length
+    ? d.stories.slice(0, 10).map((s) => ({ key: String(s.id), topic: s.topic ?? "Other", cap: `${s.position}. ${s.topic ?? "Other"}` }))
+    : TOPICS.filter((t) => t !== "Other").slice(0, 6).map((t) => ({ key: t, topic: t, cap: t }));
+  const spots = shown.length <= 6 ? SPOTS_6 : shown.length <= 8 ? SPOTS_8 : SPOTS_10;
   const suppressed = d.subCounts.unsubscribed + d.subCounts.bounced + d.subCounts.complained;
   const hasDraft = d.stories.length > 0;
   return (
@@ -120,11 +123,11 @@ function Overview({ d }: { d: D }) {
           {shown.map((t, i) => {
             const s = spots[i];
             return (
-              <figure className="tile" key={t} style={{ "--x": s.x, "--y": s.y, "--r": s.r, "--sx": s.sx, "--sy": s.sy } as React.CSSProperties}>
+              <figure className={`tile${shown.length > 8 ? " small" : ""}`} key={t.key} style={{ "--x": s.x, "--y": s.y, "--r": s.r, "--sx": s.sx, "--sy": s.sy } as React.CSSProperties}>
                 <div style={{ position: "relative", width: "100%", height: "100%" }}>
-                  <Image src={topicImage(t)} alt={`Illustration for ${t}`} fill sizes="(max-width: 760px) 30vw, 220px" />
+                  <Image src={topicImage(t.topic)} alt={`Illustration for ${t.topic}`} fill sizes="(max-width: 760px) 30vw, 220px" />
                 </div>
-                <figcaption className="cap">{t}</figcaption>
+                <figcaption className="cap">{t.cap}</figcaption>
               </figure>
             );
           })}

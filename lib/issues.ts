@@ -124,14 +124,29 @@ async function renumber(issueId: number) {
             WHERE s.id = x.id`;
 }
 
+/**
+ * Reject a story. The brief requires 8–10 stories, so if removing it would leave fewer
+ * than 8, the best unused reserve (or a Gemini pick) takes its place automatically.
+ */
 export async function rejectStory(storyId: number, channel: Channel) {
   const story = await editableStory(storyId);
   await sql`UPDATE issue_stories SET state = 'rejected', position = NULL, edited_at = now() WHERE id = ${storyId}`;
   await renumber(story.issue_id);
   await logEvent(story.issue_id, "story_rejected", channel, `Removed: ${story.title}`);
+  let replacement: Story | null = null;
+  let remaining = await getStories(story.issue_id);
+  if (remaining.length < MIN_STORIES) {
+    try {
+      const r = await bringInReplacement(story.issue_id, remaining.length + 1, remaining);
+      replacement = await getStory(r.id);
+      await logEvent(story.issue_id, "story_added", channel, `Replacement added to keep ${MIN_STORIES} stories (${r.via})`);
+      remaining = await getStories(story.issue_id);
+    } catch (e) {
+      if (!(e instanceof IssueError)) throw e; // nothing left to bring in: the draft stays short and can't be confirmed
+    }
+  }
   const revoked = await revokeApprovalIfApproved(story.issue_id, channel, "Story removed");
-  const health = draftHealth(await getStories(story.issue_id));
-  return { story, revoked, health };
+  return { story, replacement, revoked, health: draftHealth(remaining) };
 }
 
 /**
@@ -151,7 +166,8 @@ async function bringInReplacement(issueId: number, position: number, remaining: 
   const pool = await candidates(issue.week_key, issue.id);
   if (!pool.length) throw new IssueError("No reserves or unused candidates left to swap in.");
   const voice = (await latestVoiceGuide())?.content ?? "";
-  const rep = await geminiReplacement(pool, remaining.map((s) => ({ title: s.title, topic: s.topic ?? "Other" })), voice);
+  const removed = (await getStories(issueId, ["rejected", "swapped_out"])).map((s) => s.title);
+  const rep = await geminiReplacement(pool, remaining.map((s) => ({ title: s.title, topic: s.topic ?? "Other" })), voice, removed);
   const art = pool.find((c) => c.id === rep.article_id)!;
   const check = checkCommentary(rep.commentary, `${art.title} ${art.summary ?? ""}`);
   const ins = await sql`INSERT INTO issue_stories (issue_id, article_id, position, commentary, original_commentary, state, gemini_rationale, needs_review, review_notes)
@@ -179,6 +195,7 @@ export async function addReplacement(issueId: number, channel: Channel) {
   const issue = await getIssue(issueId);
   if (!issue || !EDITABLE.includes(issue.status)) throw new IssueError("Edits are closed for this issue.");
   const remaining = await getStories(issueId);
+  if (remaining.length >= MAX_STORIES) throw new IssueError(`The draft already has ${MAX_STORIES} stories, the maximum.`);
   const { id, via } = await bringInReplacement(issueId, remaining.length + 1, remaining);
   await logEvent(issueId, "story_added", channel, `Replacement added (${via})`);
   const revoked = await revokeApprovalIfApproved(issueId, channel, "Story added");
@@ -199,6 +216,11 @@ export async function approveIssue(issueId: number, via: "telegram" | "dashboard
   const lateOk = issue.status === "skipped" && istParts(at).dateStr === istParts(sendAt).dateStr;
   if (issue.status !== "pending_approval" && !lateOk) {
     return { ok: false, message: `Issue #${issue.issue_number} is ${issue.status.replace(/_/g, " ")}; it can't be approved now.`, offerSendNow: false, warnings: [] };
+  }
+  // The brief: 8–10 stories spanning at least 3 topics. A draft outside that can't be confirmed.
+  const check = draftHealth(await getStories(issueId));
+  if (check.count < MIN_STORIES || check.count > MAX_STORIES || check.topics.length < MIN_TOPICS) {
+    return { ok: false, message: `Issue #${issue.issue_number} can't be confirmed yet: it has ${check.warnings.join(" and ")}. Swap a story in first.`, offerSendNow: false, warnings: check.warnings };
   }
   const rows = await sql`UPDATE issues SET status = 'approved', approved_at = ${at.toISOString()}, approved_via = ${via}
                          WHERE id = ${issueId} AND status = ${issue.status} RETURNING id`;

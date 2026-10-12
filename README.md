@@ -20,7 +20,7 @@ A weekly newsletter about the Indian startup and tech ecosystem, run almost hand
 | Wednesday afternoon: 8–10 high signal-to-noise stories, none from the last 4 issues, at least 3 topics | `lib/editorial.ts`: the prompt states the criteria verbatim, then a **code validator** checks the result, retries once and repairs it deterministically if needed |
 | 2–3 lines of commentary in her documented voice, stored as a style guide | `voice_guide` table (versioned). **Learn my voice** documents the guide from her past issues. Sentence count and unsupported numbers are checked in code |
 | Delivered via Telegram by Wednesday evening | cron `30 9 * * 3` (15:00 IST) → header, one card per story, confirm/reject footer |
-| She reviews, edits, **approves or swaps stories individually** | per story ✅ Keep · ✏️ Edit · 🔄 Swap · ❌ Reject, with progress "6 of 9 approved" |
+| She reviews, edits, **approves or swaps stories individually** | per story ✅ Keep · ✏️ Edit · 🔄 Swap · ❌ Reject, with progress "6 of 9 approved". Rejecting at 8 stories brings in a replacement automatically, and the final confirmation is refused outside 8–10 stories / below 3 topics |
 | When she confirms the final draft, it is assembled into a formatted email and sent Thursday morning | ✅ Confirm final draft (with confirmation) → cron `30 2 * * 4` (08:00 IST) → HTML + plain-text email |
 | Never sends autonomously; waits for explicit confirmation | one send function starting with an atomic `UPDATE … WHERE status='approved'` claim. Any edit after approval revokes it |
 | Reminder if no confirmation by Wednesday 10 PM | cron `30 16 * * 3` → fires 22:00–22:59 IST, once, only while still pending |
@@ -74,7 +74,7 @@ Details: [docs/SCHEMA.md](docs/SCHEMA.md).
 ## The dashboard: a newspaper you can page through
 
 - **Top navigation:** Overview · Draft · Articles · Voice · Subscribers · Logs · How it works, right under the masthead.
-- **Front page, kept deliberately simple:** one status headline with the next action, a five-step status line (Collect → Select → Review → Send → Track delivery), four numbers (articles, stories approved, unsubscribes & bounces, review time vs ~4 h by hand), a rubber stamp when approved or sent, and a collage of this week's topics around one button: **View this week's draft**.
+- **Front page, kept deliberately simple:** one status headline with the next action, a five-step status line (Collect → Select → Review → Send → Track delivery), four numbers (articles, stories approved, unsubscribes & bounces, review time vs ~4 h by hand), a rubber stamp when approved or sent, and a collage with one picture per story (8–10) around one button: **View this week's draft**.
 - **Turning pages:** the paper **folds** to the next page. From the front page the collage pictures move aside first. Arrow keys and swipes work too, and reduced-motion users get no animation.
 - **Inside pages:** the draft (illustrated story cards with keep/edit/swap/reject, Gemini's reasons, approval history, topic mix vs the last four issues, and the email as subscribers will see it), articles (why each was kept or dropped, source health), editorial voice (Learn my voice, edit, version history), subscribers (unsubscribes, bounces, delivery tracking, CSV import), logs, and how it works.
 - **Two fonts (Playfair Display headlines, Libre Caslon text), paper creased only at the edges.** Topic illustrations are newsprint etchings generated once with Gemini Flash image (`scripts/generate-topic-art.ts`).

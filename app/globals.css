@@ -157,6 +157,7 @@ a.card:hover { text-decoration: none; background: rgba(255,252,244,.5); }
   transition: transform .55s cubic-bezier(.6,.05,.4,1), opacity .45s ease, left .55s cubic-bezier(.6,.05,.4,1), top .55s cubic-bezier(.6,.05,.4,1);
   clip-path: polygon(0 2%, 8% 0, 22% 1.5%, 40% 0, 63% 1.2%, 82% 0, 100% 1.5%, 99% 30%, 100% 62%, 98.8% 100%, 75% 98.6%, 50% 100%, 24% 98.8%, 0 100%, 1.2% 66%, 0 33%);
 }
+.tile.small { width: 14.5%; }
 .tile img { width: 100%; height: 100%; object-fit: cover; display: block; filter: sepia(.25) contrast(1.05); }
 .tile .cap { position: absolute; left: 0; right: 0; bottom: 3px; text-align: center; font-family: var(--label); font-size: 10px; letter-spacing: .02em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
 .collage-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-1.5deg); z-index: 5; background: var(--paper); background-image: var(--noise); border: 1px solid var(--rule); padding: 16px 18px; text-align: center; box-shadow: 4px 6px 0 rgba(31,27,22,.2); min-width: 240px; transition: all .4s ease; }
@@ -325,6 +326,7 @@ iframe.preview { width: 100%; height: 720px; border: 1px solid var(--line); back
   .card:nth-child(n+3) { border-top: 1px dotted var(--line); }
   .collage { height: 380px; margin: 0 6px; }
   .tile { width: 24%; }
+  .tile.small { width: 19%; }
   .draft-grid { grid-template-columns: 1fr; }
   .story { border-right: 0 !important; }
   .story.lead { grid-template-columns: 1fr; }

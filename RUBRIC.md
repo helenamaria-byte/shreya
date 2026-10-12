@@ -2,7 +2,7 @@
 
 Self-assessment and acceptance checklist against **Problem Statement 17 (MESA Cohort C4, AI and its Applications — Section 1)**. A row is ✅ only when evidence exists; ⚠️ = partial, ❌ = not done (with the reason).
 
-Evidence lives in [`docs/evidence/`](docs/evidence/): `test-results.txt` (full Vitest run: 66 tests in 6 files, all passing), `e2e.txt` (production checks), `live-email-test.txt`, `cron-triggers.txt`, `broken-feed-run.txt`, `telegram-live-test.txt`, `gitleaks.txt`, `gemini-only-grep.txt`. Real Gemini output: [`docs/sample-run/`](docs/sample-run/README.md). Screenshots: [`docs/screenshots/`](docs/screenshots/).
+Evidence lives in [`docs/evidence/`](docs/evidence/): `test-results.txt` (full Vitest run: 68 tests in 6 files, all passing), `e2e.txt` (production checks), `live-email-test.txt`, `cron-triggers.txt`, `broken-feed-run.txt`, `telegram-live-test.txt`, `gitleaks.txt`, `gemini-only-grep.txt`. Real Gemini output: [`docs/sample-run/`](docs/sample-run/README.md). Screenshots: [`docs/screenshots/`](docs/screenshots/).
 
 ## Trace: every sentence of the brief
 
@@ -57,7 +57,7 @@ Evidence lives in [`docs/evidence/`](docs/evidence/): `test-results.txt` (full V
 
 | ID | Requirement | Pts | Pass criteria | Status | Implementation | Evidence |
 |---|---|---|---|---|---|---|
-| D1 | Selects 8–10 stories | 4 | Live run has 8–10; validator rejects other counts | ✅ | `selectStories`, `validateSelection`, `repairSelection` | `sample-run/README.md` (9 stories); tests "rejects too few and too many", "retried once … repaired in code" |
+| D1 | Selects 8–10 stories | 4 | Live run has 8–10; validator rejects other counts | ✅ | `selectStories`, `validateSelection`, `repairSelection`; kept at 8–10 through review (auto-replacement on reject, confirmation refused outside 8–10) | `sample-run/README.md` (9 stories); tests "rejects too few and too many", "retried once … repaired in code" |
 | D2 | ≥3 topic areas | 3 | Live draft spans ≥3 topics; validator enforces | ✅ | `validateSelection` | sample run: 7 topics; test "rejects fewer than 3 topics" |
 | D3 | Editorial criteria | 4 | Prompt encodes signal-to-noise vs this week's batch, counterintuitive, under-reported, connecting trends; rationale per story | ✅ | `SELECTION_CRITERIA` (verbatim), `gemini_rationale`, `connects_with` | test "states the editorial criteria verbatim"; "Why Gemini picked it" on every story card |
 | D4 | 2–3 lines of commentary | 3 | 2–3 sentences, checked in code | ✅ | `checkCommentary()` | tests "counts sentences", "trims to 3 … flags fewer than 2" |
@@ -70,8 +70,8 @@ Evidence lives in [`docs/evidence/`](docs/evidence/): `test-results.txt` (full V
 |---|---|---|---|---|---|---|
 | E1 | Draft delivered by Wednesday evening | 3 | Cron Wed afternoon IST; real draft in Telegram | ✅ | `30 9 * * 3` (15:00 IST); `sendDraft` | `telegram-live-test.txt` steps 1/10; test "sends the draft to Telegram" (header + cards + footer, ≤4,096 chars) |
 | E2 | Edit commentary | 3 | Edit via Telegram updates DB | ✅ | ✏️ ForceReply (30 min) + `/edit n text` | `telegram-live-test.txt` steps 3–4; test "Edit via ForceReply and /edit" |
-| E3 | Swap / reject individual stories | 4 | Swap uses reserves; reject removes; DB reflects both | ✅ | `swapStory` (reserve keeping ≥3 topics, Gemini fallback), `rejectStory` (warns, offers swap) | `telegram-live-test.txt` steps 5–6; test "Swap uses the reserves … Reject removes and warns" |
-| E4 | Explicit approval recorded | 3 | Confirmation step; status, time and channel stored | ✅ | ✅ Confirm final draft → "Approve issue #N …? k of n approved individually" → Yes | `telegram-live-test.txt` steps 7–8; tests "Approve asks for confirmation…", "final confirmation names unapproved stories" |
+| E3 | Swap / reject individual stories | 4 | Swap uses reserves; reject removes; DB reflects both | ✅ | `swapStory` (reserve keeping ≥3 topics, Gemini fallback), `rejectStory` (at 8 stories a reserve or Gemini pick replaces it automatically) | `telegram-live-test.txt` steps 5–6; tests "Swap uses the reserves … Reject at 8 stories brings in a reserve to keep 8", "when no reserves are left … can't be confirmed" |
+| E4 | Explicit approval recorded | 3 | Confirmation step; status, time and channel stored | ✅ | ✅ Confirm final draft → "Approve issue #N …? k of n approved individually" → Yes; refused outside 8–10 stories / below 3 topics | `telegram-live-test.txt` steps 7–8; tests "Approve asks for confirmation…", "final confirmation names unapproved stories", "a draft with fewer than 8 stories or 3 topics can't be confirmed", "8 stories but only 2 topics can't be confirmed" |
 | E5 | Secure bot | 2 | Wrong secret or chat rejected | ✅ | secret header + chat ID check | test "wrong secret → 401; wrong chat → ignored"; `e2e.txt` |
 
 ## F. Scheduling and reminder — 8 pts

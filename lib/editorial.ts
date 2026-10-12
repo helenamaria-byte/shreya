@@ -286,7 +286,7 @@ export function checkCommentary(commentary: string, source: string): { commentar
 // ---------------------------------------------------------------------------
 // Swap replacement when reserves run out
 // ---------------------------------------------------------------------------
-export async function geminiReplacement(cands: Candidate[], keep: { title: string; topic: string }[], voice: string) {
+export async function geminiReplacement(cands: Candidate[], keep: { title: string; topic: string }[], voice: string, removed: string[] = []) {
   const out = await generateJson<{ article_id: number; rationale: string; commentary: string }>({
     system: "You are a sharp, careful newsletter editor. Return JSON only.",
     prompt: [
@@ -297,6 +297,7 @@ export async function geminiReplacement(cands: Candidate[], keep: { title: strin
       GROUNDING_RULES,
       `Voice guide:\n${voice}`,
       `Stories already in the issue:\n${keep.map((k) => `- [${k.topic}] ${k.title}`).join("\n")}`,
+      removed.length ? `Shreya removed these stories from the draft. Do NOT pick them again, or any other article about the same events:\n${removed.map((t) => `- ${t}`).join("\n")}` : "",
       `Candidates (id | topic | source | title | summary):\n${cands.map((c) => `${c.id} | ${c.topic} | ${c.source_name} | ${c.title} | ${(c.summary || "").slice(0, 200)}`).join("\n")}`,
     ].join("\n\n"),
     schema: {
