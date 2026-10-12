@@ -10,7 +10,7 @@ async function main() {
   await page.setContent("<!doctype html><html><body></body></html>");
   await page.addScriptTag({ content: mermaidJs });
   await page.evaluate(() => (window as any).mermaid.initialize({ startOnLoad: false, theme: "neutral", flowchart: { htmlLabels: true, wrappingWidth: 240 } }));
-  for (const name of ["components-map", "workflow-flowchart"]) {
+  for (const name of ["workflow-flowchart"]) { // the components map is drawn by scripts/render-components-map.ts
     const src = fs.readFileSync(path.resolve(`docs/${name}.mmd`), "utf8");
     const raw = await page.evaluate(async ([id, code]) => (await (window as any).mermaid.render(id, code)).svg, [name.replace(/-/g, ""), src]);
     // Mermaid's HTML labels emit "<br>", which is invalid XML and breaks the SVG when loaded via <img>.

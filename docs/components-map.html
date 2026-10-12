@@ -1,0 +1,65 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+  body { margin: 0; background: #fff; font-family: "DejaVu Sans", Verdana, "Segoe UI", sans-serif; }
+  .stage { position: relative; width: 2000px; height: 1440px; }
+  .title { position: absolute; top: 26px; left: 0; right: 0; text-align: center; font-size: 40px; font-weight: 700; color: #1b2c4b; letter-spacing: .3px; }
+  .head { position: absolute; top: 100px; left: 38px; width: 1924px; height: 65px; background: #172b4d; border-radius: 9px; }
+  .head span { position: absolute; top: 0; height: 65px; line-height: 65px; text-align: center; color: #fff; font-size: 25px; }
+  .row { position: absolute; left: 263px; width: 1699px; height: 145.5px; }
+  .vline { position: absolute; top: 176px; width: 2px; height: 1180px; background: rgba(255,255,255,.85); }
+  .actor { position: absolute; left: 38px; width: 225px; height: 145.5px; background: #172b4d; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .actor b { font-size: 21px; letter-spacing: .1px; white-space: nowrap; }
+  .actor small { font-size: 16px; color: #d7deea; margin-top: 8px; }
+  .box { position: absolute; width: 248px; height: 112px; border: 3px solid; border-radius: 12px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px 12px; font-size: 15.5px; line-height: 1.3; color: #1b2c4b; }
+  .note { position: absolute; top: 1382px; left: 38px; font-size: 18px; color: #5f6b7a; }
+  svg { position: absolute; inset: 0; }
+</style></head><body><div class="stage">
+  <div class="title">The Dispatch · Newsletter Intelligence Engine — Components Map</div>
+  <div class="head">
+    <span style="left:0;width:225px">Actor</span>
+    <span style="left:225px;width:283.1666666666667px">Trigger</span><span style="left:508.1666666666667px;width:283.1666666666667px">Input</span><span style="left:791.3333333333334px;width:283.1666666666667px">Context</span><span style="left:1074.5px;width:283.1666666666667px">Processing</span><span style="left:1357.6666666666667px;width:283.1666666666667px">AI</span><span style="left:1640.8333333333335px;width:283.1666666666667px">Output</span>
+  </div>
+  <div class="row" style="top:176px;background:#e6ecf8"></div>
+  <div class="actor" style="top:176px"><b>Code & Schedule</b><small>(GitHub, Vercel Cron)</small></div>
+  <div class="row" style="top:323.5px;background:#e6ecf8"></div>
+  <div class="actor" style="top:323.5px"><b>News Sources</b><small>(RSS, Google News, GNews)</small></div>
+  <div class="row" style="top:471px;background:#e5f2e5"></div>
+  <div class="actor" style="top:471px"><b>Database</b><small>(Neon Postgres)</small></div>
+  <div class="row" style="top:618.5px;background:#eee5f8"></div>
+  <div class="actor" style="top:618.5px"><b>AI Editor</b><small>(Gemini Flash)</small></div>
+  <div class="row" style="top:766px;background:#e2f2ee"></div>
+  <div class="actor" style="top:766px"><b>Review</b><small>(Telegram Bot)</small></div>
+  <div class="row" style="top:913.5px;background:#fdf6e4"></div>
+  <div class="actor" style="top:913.5px"><b>System</b><small>(App on Vercel)</small></div>
+  <div class="row" style="top:1061px;background:#fce8ef"></div>
+  <div class="actor" style="top:1061px"><b>Email Service</b><small>(Resend)</small></div>
+  <div class="row" style="top:1208.5px;background:#fcefe5"></div>
+  <div class="actor" style="top:1208.5px"><b>People</b><small>(Shreya, Subscribers)</small></div>
+  <div class="vline" style="left:545.1666666666667px"></div><div class="vline" style="left:828.3333333333334px"></div><div class="vline" style="left:1111.5px"></div><div class="vline" style="left:1394.6666666666667px"></div><div class="vline" style="left:1677.8333333333335px"></div>
+  <div class="box" style="left:280.58333333333337px;top:193.75px;background:#dfe7fb;border-color:#3d7bd9">Code on GitHub deploys to Vercel. Cron (IST): Mon–Wed ingest, Wed 3 PM draft, Wed 10 PM reminder, Thu 8 AM send.</div>
+  <div class="box" style="left:563.7500000000001px;top:341.25px;background:#d8e9f9;border-color:#2f87d6">Live Indian startup news: 15 RSS feeds, 4 Google News searches and 6 GNews queries.</div>
+  <div class="box" style="left:846.9166666666667px;top:488.75px;background:#d4edd6;border-color:#2e9e4a">Stores each article once. Drops repeats and stories from the last 4 issues. Holds the voice guide.</div>
+  <div class="box" style="left:1413.25px;top:636.25px;background:#e5dbfa;border-color:#7a4fd6">Tags topics, picks 8–10 stories across 3+ topics, writes 2–3 lines in Shreya's voice. No invented facts.</div>
+  <div class="box" style="left:1130.0833333333333px;top:783.75px;background:#ffffff;border-color:#d63c3c">Draft sent to Shreya: keep, edit, swap or reject each story, then confirm. Reminder Wed 10 PM.</div>
+  <div class="box" style="left:280.58333333333337px;top:931.25px;background:#fcecc1;border-color:#d9a21b">Approval recorded (Telegram only). Thu 8 AM cron starts the send job (secret-checked).</div>
+  <div class="box" style="left:563.7500000000001px;top:931.25px;background:#fcecc1;border-color:#d9a21b">Approved draft and active subscribers; unsubscribed, bounced and spam removed.</div>
+  <div class="box" style="left:846.9166666666667px;top:931.25px;background:#fcecc1;border-color:#d9a21b">Approval gate: sends only if status is 'approved'. Otherwise sends nothing.</div>
+  <div class="box" style="left:1130.0833333333333px;top:931.25px;background:#fcecc1;border-color:#d9a21b">Builds the email. One send per issue, no duplicates. Logs every run.</div>
+  <div class="box" style="left:1696.4166666666667px;top:931.25px;background:#ffffff;border-color:#d63c3c">Dashboard (view only): Overview, Draft, Articles, Voice, Subscribers. Any article → Send to Telegram.</div>
+  <div class="box" style="left:1696.4166666666667px;top:1078.75px;background:#f8d6e2;border-color:#d63c6d">Sends The Dispatch Thursday. One-click unsubscribe. Bounces and spam logged in Neon.</div>
+  <div class="box" style="left:1696.4166666666667px;top:1226.25px;background:#ffffff;border-color:#d63c3c">Subscribers read the issue. Shreya gets the delivery report in Telegram, Thu 6 PM.</div>
+  <svg width="2000" height="1440" viewBox="0 0 2000 1440">
+    <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#172b4d"/></marker></defs>
+    <path d="M528.6,249.8 L542.2,249.8 L542.2,397.3 L563.8,397.3" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+    <path d="M811.8,397.3 L825.3,397.3 L825.3,544.8 L846.9,544.8" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+    <path d="M1094.9,544.8 L1537.3,544.8 L1537.3,636.3" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+    <path d="M1537.3,748.3 L1537.3,766.0 L1254.1,766.0 L1254.1,783.8" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+    <path d="M1254.1,895.8 L1254.1,913.5 L404.6,913.5 L404.6,931.3" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+    <path d="M528.6,987.3 L563.8,987.3" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+    <path d="M811.8,987.3 L846.9,987.3" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+    <path d="M1094.9,987.3 L1130.1,987.3" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+    <path d="M1378.1,987.3 L1696.4,987.3" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+    <path d="M1254.1,1043.3 L1254.1,1134.8 L1696.4,1134.8" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+    <path d="M1820.4,1190.8 L1820.4,1226.3" fill="none" stroke="#172b4d" stroke-width="2.6" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+  </svg>
+  <div class="note">Dashed arrows follow one weekly issue from collection to the inbox. Red boxes are what Shreya and subscribers see. Nothing is emailed without her approval in Telegram.</div>
+</div></body></html>

@@ -14,7 +14,7 @@ A weekly newsletter about the Indian startup and tech ecosystem, run almost hand
 |---|---|
 | Live external data at submission time | 15 Indian startup/tech RSS feeds, 4 Google News searches and 6 GNews API queries, collected Mon–Wed (`lib/ingest.ts`, `lib/sources.ts`) |
 | All AI tasks use Gemini Flash, not the Claude API | `lib/gemini.ts` is the only AI client, model `gemini-3.8-flash`. Topic illustrations were made once with Gemini's Flash image model |
-| Vercel URL + GitHub repo + Components Map | links above · [docs/components-map.svg](docs/components-map.svg) |
+| Vercel URL + GitHub repo + Components Map | links above · [docs/components-map.png](docs/components-map.png) |
 | Runs Mon–Wed from multiple RSS feeds and news API queries | cron `30 1 * * 1-3` (07:00 IST) |
 | Storing each article to prevent duplication within a week and across the previous four weeks' newsletters | Neon: `url_hash` UNIQUE, normalised-URL match, `pg_trgm` title similarity, plus a check against the stories of the last four sent issues |
 | Wednesday afternoon: 8–10 high signal-to-noise stories, none from the last 4 issues, at least 3 topics | `lib/editorial.ts`: the prompt states the criteria verbatim, then a **code validator** checks the result, retries once and repairs it deterministically if needed |
@@ -43,13 +43,13 @@ A weekly newsletter about the Indian startup and tech ecosystem, run almost hand
 
 ![Components map](docs/components-map.png)
 
-High-resolution image: [docs/components-map.png](docs/components-map.png) · vector: [docs/components-map.svg](docs/components-map.svg) · source: [docs/components-map.mmd](docs/components-map.mmd)
+High-resolution image: [docs/components-map.png](docs/components-map.png) · drawn by [scripts/render-components-map.ts](scripts/render-components-map.ts) (HTML source: [docs/components-map.html](docs/components-map.html))
 
 <details><summary>Weekly workflow flowchart (decision points)</summary>
 
 ![Workflow flowchart](docs/workflow-flowchart.svg)
 
-Mermaid sources: [docs/components-map.mmd](docs/components-map.mmd), [docs/workflow-flowchart.mmd](docs/workflow-flowchart.mmd).
+Mermaid source: [docs/workflow-flowchart.mmd](docs/workflow-flowchart.mmd).
 </details>
 
 ### The weekly cycle (all times IST)
