@@ -20,31 +20,30 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const page = (PAGES as readonly string[]).includes(sp.p ?? "") ? sp.p! : "overview";
   const admin = validAdminSession((await cookies()).get(ADMIN_COOKIE)?.value);
   const d = await loadDashboard({ articleTopic: sp.atopic, articleStatus: sp.astatus });
-  const v = d.voices[0];
 
   const tabs: Tab[] = [
-    { id: "overview", label: "Overview", summary: d.overview.steps[d.overview.current].state },
-    { id: "draft", label: "Newsletter draft", summary: d.stories.length ? `${d.health.count} stories · ${d.health.approved}/${d.health.count} approved` : "Due Wed 3 PM" },
-    { id: "articles", label: "Articles", summary: `${d.counts.total} collected · ${d.counts.duplicates + d.counts.covered} filtered` },
-    { id: "voice", label: "Editorial voice", summary: v ? `v${v.version} · ${sourceWord(v.source)}` : "—" },
-    { id: "subscribers", label: "Subscribers", summary: `${d.subCounts.active} active · ${d.subCounts.unsubscribed + d.subCounts.bounced + d.subCounts.complained} suppressed` },
-    { id: "logs", label: "Logs", summary: `${d.failuresThisWeek} failure${d.failuresThisWeek === 1 ? "" : "s"} this week` },
-    { id: "how", label: "How it works", summary: "Map & flowchart" },
+    { id: "overview", label: "Overview" },
+    { id: "draft", label: "Draft" },
+    { id: "articles", label: "Articles" },
+    { id: "voice", label: "Voice" },
+    { id: "subscribers", label: "Subscribers" },
+    { id: "logs", label: "Logs" },
+    { id: "how", label: "How it works" },
   ];
+  const notice = (
+    <>
+      {sp.msg && <div className={`flash${sp.err ? " err" : ""}`}>{sp.msg}{sp.run && <> · <a href={`/?p=logs#run-${sp.run}`}>see the run log</a></>}</div>}
+      {sp.login === "failed" && <div className="flash err">Wrong admin password.</div>}
+      {sp.login === "required" && <div className="flash err">Log in from “Run manually” to make changes.</div>}
+    </>
+  );
 
   return (
     <div className="stage">
       <article className="sheet">
         <div className="sheet-inner">
           <Masthead d={d} admin={admin} login={sp.login} />
-          <hr className="double-rule" />
-          <Workflow d={d} />
-          <hr className="thin-rule" />
-          {sp.msg && <div className={`flash${sp.err ? " err" : ""}`}>{sp.msg}{sp.run && <> · <a href={`/?p=logs#run-${sp.run}`}>see the run log</a></>}</div>}
-          {sp.login === "failed" && <div className="flash err">Wrong admin password.</div>}
-          {sp.login === "required" && <div className="flash err">Log in from “Run manually” to make changes.</div>}
-
-          <Paper page={page} tabs={tabs}>
+          <Paper page={page} tabs={tabs} notice={notice}>
             {page === "overview" && <Overview d={d} />}
             {page === "draft" && <DraftPage d={d} admin={admin} />}
             {page === "articles" && <ArticlesPage d={d} sp={sp} />}
@@ -55,7 +54,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           </Paper>
         </div>
       </article>
-      <p className="footer">The Dispatch · assignment prototype · AI by Gemini Flash · <a href="/api/health">health</a> · ← → to turn pages</p>
+      <p className="footer">Assignment prototype · sample data is labelled · AI by Gemini Flash · <a href="/api/health">health</a></p>
     </div>
   );
 }
@@ -64,44 +63,23 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 function Masthead({ d, admin, login }: { d: D; admin: boolean; login?: string }) {
   return (
     <header className="masthead">
-      <div className="left">India's startup ecosystem<br />Newsletter intelligence engine<br /><span className="muted">Week {d.week}</span></div>
-      <a className="title" href="/" data-page="overview"><span className="the">The</span><span className="big">Dispatch</span></a>
-      <div className="right">
-        <span className="note">Good ideas deserve better headlines.</span>
-        <span className="dateline">{formatIst(d.at, { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: undefined, minute: undefined })}<br />{formatIst(d.at, { weekday: undefined, day: undefined, month: undefined, hour: "numeric", minute: "2-digit" })} (IST)</span>
-        <RunMenu admin={admin} login={login} />
-      </div>
+      <span className="dateline">{formatIst(d.at, { weekday: "long", day: "numeric", month: "long", hour: undefined, minute: undefined })}</span>
+      <a className="title" href="/" data-page="overview">The Dispatch</a>
+      <div className="right"><RunMenu admin={admin} login={login} /></div>
     </header>
   );
 }
 
-const ICONS: Record<string, React.ReactNode> = {
-  doc: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M7 3h7l4 4v14H7z" /><path d="M14 3v4h4M9.5 12h6M9.5 15.5h6" /></svg>,
-  spark: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" /></svg>,
-  person: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="8" r="3.5" /><path d="M5 20c1.2-3.8 4-5.5 7-5.5s5.8 1.7 7 5.5" /></svg>,
-  send: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z" /></svg>,
-  chart: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3" /></svg>,
-  check: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M8 12.5l2.7 2.7L16 9.5" /></svg>,
-  copy: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="8" y="8" width="12" height="12" rx="1.5" /><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" /></svg>,
-  mailx: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="5" width="18" height="14" rx="1.5" /><path d="M3.5 6l8.5 7 8.5-7M15 15l4 4M19 15l-4 4" /></svg>,
-  clock: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>,
-};
-
 function Workflow({ d }: { d: D }) {
-  const icons = ["doc", "spark", "person", "send", "chart"];
   return (
-    <section className="workflow" aria-label="Weekly workflow">
-      <div className="label"><h3>Weekly workflow</h3><p>Automated. Curated. Reviewed.</p></div>
+    <ol className="workflow" aria-label="This week's workflow">
       {d.overview.steps.map((s, i) => (
-        <div key={s.label} className={`step${i === d.overview.current ? " current" : ""}`}>
-          <span className="ico">{ICONS[icons[i]]}</span>
-          <div>
-            <div className="name">{s.label} <span className={`dot ${s.dot}`} title={s.state} /></div>
-            <div className="sub">{s.state} · {s.when}</div>
-          </div>
-        </div>
+        <li key={s.label} className={i === d.overview.current ? "current" : ""}>
+          <span className="name"><span className={`dot ${s.dot}`} />{s.label}</span>
+          <span className="sub">{s.state}</span>
+        </li>
       ))}
-    </section>
+    </ol>
   );
 }
 
@@ -110,89 +88,60 @@ function Workflow({ d }: { d: D }) {
 // ---------------------------------------------------------------------------
 // Collage layouts: tiles around the central "View this week's draft" card; sx/sy = where each flies when the page turns.
 const T = (x: number, y: number, r: number) => ({ x: `${x}%`, y: `${y}%`, r: `${r}deg`, sx: `${50 + (x - 50) * 2.6}%`, sy: `${50 + (y - 50) * 2.6}%` });
-const SPOTS_6 = [T(17, 24, -6), T(50, 17, 3), T(83, 24, 6), T(17, 77, 4), T(50, 84, -2), T(83, 77, -5)];
-const SPOTS_8 = [T(15, 20, -6), T(50, 14, 3), T(85, 20, 6), T(13, 52, 3), T(87, 52, -4), T(17, 84, 4), T(50, 88, -2), T(83, 84, -5)];
+const SPOTS_6 = [T(17, 23, -5), T(50, 18, 2), T(83, 23, 5), T(17, 77, 3), T(50, 82, -2), T(83, 77, -4)];
+const SPOTS_8 = [T(14, 23, -5), T(38, 18, 2), T(62, 18, -2), T(86, 23, 5), T(14, 77, 3), T(38, 82, -2), T(62, 82, 2), T(86, 77, -4)];
 
 function Overview({ d }: { d: D }) {
   const o = d.overview;
   const topics = [...new Set(d.stories.map((s) => s.topic ?? "Other"))];
   const shown = (topics.length ? topics : TOPICS.filter((t) => t !== "Other").slice(0, 6)).slice(0, 8);
   const spots = shown.length <= 6 ? SPOTS_6 : SPOTS_8;
-  const lead = d.stories[0];
   const suppressed = d.subCounts.unsubscribed + d.subCounts.bounced + d.subCounts.complained;
   const hasDraft = d.stories.length > 0;
   return (
     <>
       <section className="front-head">
-        <div className="kicker">The weekly overview</div>
         <h1>{o.headline}</h1>
-        <div className="next-line"><b>What to do next</b><span>{o.next}</span>
-          {o.telegram && <a className="btn" href={`https://t.me/${process.env.TELEGRAM_BOT_USERNAME || ""}`} target="_blank" rel="noreferrer">Open Telegram ↗</a>}
-        </div>
-        {o.stamp && <div className="stamp big" style={{ right: 10, top: 18 }}>{o.stamp[0]}<small>{o.stamp[1]}</small></div>}
+        <p className="next">{o.next}{o.telegram && <> <a href={`https://t.me/${process.env.TELEGRAM_BOT_USERNAME || ""}`} target="_blank" rel="noreferrer">Open Telegram ↗</a></>}</p>
+        {o.stamp && <div className="stamp big" style={{ right: 0, top: 6 }}>{o.stamp[0]}<small>{o.stamp[1]}</small></div>}
       </section>
 
+      <Workflow d={d} />
+
       <section className="cards" aria-label="This week in numbers">
-        <Card href="/?p=articles" icon="doc" tint="tint-green" num={d.counts.total} lbl="Articles collected"
-          sub={`From ${d.activeSources.length} sources · latest ${d.counts.latest ? formatIst(d.counts.latest, { weekday: undefined, day: undefined, month: undefined }) : "—"}`} />
-        <Card href="/?p=draft" icon="check" tint="tint-rose" num={hasDraft ? `${d.health.approved} / ${d.health.count}` : "—"} lbl="Stories approved"
-          sub={hasDraft ? `${d.health.topics.length} topics · approve each one in Telegram` : "Draft arrives Wed 3 PM"} />
-        <Card href="/?p=articles&astatus=duplicate" icon="copy" tint="tint-sand" num={d.counts.duplicates + d.counts.covered} lbl="Duplicates filtered"
-          sub={`${d.counts.duplicates} this week · ${d.counts.covered} covered in the last 4 issues`} />
-        <Card href="/?p=subscribers" icon="mailx" tint="tint-lilac" num={suppressed} lbl="Unsubscribes & bounces"
-          sub={`${d.subCounts.unsubscribed} unsubscribed · ${d.subCounts.bounced} bounced · ${d.subCounts.complained} spam · all suppressed`} />
-        <Card href="/?p=draft" icon="clock" tint="tint-blue" num={d.review ? fmtMinutes(d.review.minutes) : "—"} lbl={d.review?.done ? "Review time" : "In review for"}
-          sub={`vs ~${MANUAL_MINUTES / 60} h by hand · ${d.counts.total} articles screened for her`} />
+        <Card href="/?p=articles" num={d.counts.total} lbl="Articles collected" sub={`from ${d.activeSources.length} sources`} />
+        <Card href="/?p=draft" num={hasDraft ? `${d.health.approved}/${d.health.count}` : "—"} lbl="Stories approved" sub={hasDraft ? `${d.health.topics.length} topics` : "draft due Wed 3 PM"} />
+        <Card href="/?p=subscribers" num={suppressed} lbl="Unsubscribes & bounces" sub="all suppressed" />
+        <Card href="/?p=draft" num={d.review ? fmtMinutes(d.review.minutes) : "—"} lbl={d.review?.done ? "Review time" : "In review"} sub={`vs ~${MANUAL_MINUTES / 60} h by hand`} />
       </section>
 
       <section className="edition" aria-label="This week's edition">
-        <div>
-          <div className="kicker">This week's edition{d.issue ? ` · Issue #${d.issue.issue_number}` : ""}</div>
-          <h2>The Indian Startup Pulse</h2>
-          <p className="strap">8–10 stories. 3+ topics. One newsletter.</p>
-          <p className="blurb">
-            {hasDraft
-              ? `Gemini read ${d.counts.candidates} usable stories and picked ${d.health.count} across ${d.health.topics.length} topics. Check each story, refine the commentary if needed, and confirm by Wednesday 10 PM. Nothing is emailed without Shreya's confirmation.`
-              : "Articles are being collected Monday to Wednesday. On Wednesday at 3 PM Gemini picks this week's stories and sends the draft to Telegram."}
-          </p>
-          {lead && (
-            <div className="lead">
-              <span className="kicker">Lead story · {lead.topic}</span>
-              <h3>{lead.title}</h3>
-              <p className="small muted">{lead.source_name}</p>
-            </div>
-          )}
-        </div>
-        <div className="collage" aria-hidden={false}>
+        <div className="collage">
           {shown.map((t, i) => {
             const s = spots[i];
-            const count = d.stories.filter((x) => x.topic === t).length;
             return (
               <figure className="tile" key={t} style={{ "--x": s.x, "--y": s.y, "--r": s.r, "--sx": s.sx, "--sy": s.sy } as React.CSSProperties}>
                 <div style={{ position: "relative", width: "100%", height: "100%" }}>
-                  <Image src={topicImage(t)} alt={`Illustration for ${t}`} fill sizes="(max-width: 760px) 30vw, 200px" />
+                  <Image src={topicImage(t)} alt={`Illustration for ${t}`} fill sizes="(max-width: 760px) 30vw, 220px" />
                 </div>
-                <figcaption className="cap">{t}{count ? ` · ${count}` : ""}</figcaption>
+                <figcaption className="cap">{t}</figcaption>
               </figure>
             );
           })}
           <div className="collage-center">
-            <span className="kicker">{hasDraft ? `${d.health.count} stories · ${d.health.topics.length} topics` : "Coming Wednesday"}</span>
-            <div className="count">{hasDraft ? "This week's draft" : "Draft not ready yet"}</div>
-            <a className="btn primary" href="/?p=draft" data-page="draft" data-scatter>View this week's draft →</a>
+            <span className="kicker">{d.issue ? `Issue #${d.issue.issue_number}` : "This week"}{hasDraft ? ` · ${d.health.count} stories` : ""}</span>
+            <a className="btn primary" href="/?p=draft" data-page="draft" data-scatter>{hasDraft ? "View this week's draft →" : "Draft arrives Wednesday"}</a>
           </div>
         </div>
-        <span className="sun" aria-hidden />
       </section>
     </>
   );
 }
 
-function Card({ href, icon, tint, num, lbl, sub }: { href: string; icon: string; tint: string; num: React.ReactNode; lbl: string; sub: string }) {
+function Card({ href, num, lbl, sub }: { href: string; num: React.ReactNode; lbl: string; sub: string }) {
   const page = new URLSearchParams(href.split("?")[1]).get("p") ?? "overview";
   return (
-    <a className="card" href={href} data-page={href.includes("astatus") ? undefined : page}>
-      <span className={`icon ${tint}`}>{ICONS[icon]}</span>
+    <a className="card" href={href} data-page={page}>
       <span className="num">{num}</span>
       <span className="lbl">{lbl}</span>
       <span className="sub">{sub}</span>
@@ -208,7 +157,7 @@ function DraftPage({ d, admin }: { d: D; admin: boolean }) {
   const email = d.issue && d.stories.length ? renderEmail(d.issue, d.stories, { unsubscribeUrl: "#preview", date: new Date() }) : null;
   if (!d.stories.length) {
     return (
-      <section className="page-head"><div><div className="kicker">Inside this week's edition</div><h1>No draft yet</h1>
+      <section className="page-head"><div><h1>No draft yet</h1>
         <p className="lede">Gemini selects this week's stories on Wednesday at 3 PM IST ({SCHEDULE.draft.cron} UTC) and sends the draft to Telegram.</p></div></section>
     );
   }
@@ -216,8 +165,7 @@ function DraftPage({ d, admin }: { d: D; admin: boolean }) {
     <>
       <section className="page-head">
         <div>
-          <div className="kicker">Inside this week's edition · Issue #{d.issue!.issue_number} · {d.issue!.week_key}</div>
-          <h1>{d.health.count} stories, {d.health.topics.length} topics</h1>
+          <h1>Issue #{d.issue!.issue_number}: {d.health.count} stories, {d.health.topics.length} topics</h1>
           <p className="lede">{d.health.approved} of {d.health.count} stories approved individually{d.health.needsReview ? ` · ${d.health.needsReview} need${d.health.needsReview === 1 ? "s" : ""} a fact check` : ""}. {o.next}</p>
           <div className="meter" aria-label={`${d.health.approved} of ${d.health.count} approved`}>{d.stories.map((s) => <i key={s.id} className={s.approved_at ? "on" : ""} />)}</div>
           {d.health.warnings.length > 0 && <p className="note" style={{ marginTop: 10 }}>⚠️ {d.health.warnings.join(" · ")}</p>}
@@ -267,53 +215,53 @@ function DraftPage({ d, admin }: { d: D; admin: boolean }) {
         ))}
       </section>
 
-      <section className="columns">
-        <div className="box">
-          <h3>Approval history</h3>
-          <Timeline d={d} />
-          {admin && ["pending_approval", "skipped"].includes(d.issue!.status) && (
-            <form method="post" action="/api/admin/action" style={{ display: "grid", gap: 8 }}>
-              <input type="hidden" name="action" value="approve" /><input type="hidden" name="issue_id" value={d.issue!.id} />
-              <label className="small"><input type="checkbox" name="confirm" /> Confirm the final draft of issue #{d.issue!.issue_number} ({d.health.count} stories) from the dashboard</label>
-              <button className="btn" type="submit">✅ Confirm final draft</button>
-            </form>
-          )}
-          {!admin && <p className="small muted">Shreya approves in Telegram: ✅ Keep each story, then ✅ Confirm final draft.</p>}
-        </div>
-        <div className="box">
-          <h3>Topic mix vs the last four issues</h3>
-          <div className="topic-mix">
-            {d.topicMix.map((t) => (
-              <div className="row" key={t.topic}>
-                <span>{t.topic}</span>
-                <span className="bar" title={`this week ${t.now}, average ${t.pastAvg.toFixed(1)}`}>
-                  <span style={{ width: `${Math.min(100, t.now * 25)}%` }} /><em style={{ left: `${Math.min(100, t.pastAvg * 25)}%` }} />
-                </span>
-                <span className="mono">{t.now} <span className="muted">/ {t.pastAvg.toFixed(1)}</span></span>
-              </div>
-            ))}
-          </div>
-          <p className="small muted">Bar = stories this week; red tick = average of the last four issues{d.pastIssues.some((p) => p.is_sample) ? " (sample past issues)" : ""}.</p>
-          <details className="nested">
-            <summary>Reserves ({d.reserves.length}) and removed stories ({d.removed.length})</summary>
-            <div className="inner">
-              {d.reserves.map((r) => <p key={r.id} className="small"><span className="tag">reserve {r.reserve_rank}</span> {r.title} <span className="muted">· {r.topic}</span></p>)}
-              {d.removed.map((r) => <p key={r.id} className="small"><span className="tag">{r.state.replace("_", " ")}</span> {r.title} <span className="muted">· {r.topic}</span></p>)}
-              {!d.reserves.length && !d.removed.length && <p className="muted small">None.</p>}
-            </div>
-          </details>
-        </div>
-      </section>
-
-      {email && (
+      <section className="below">
+        {admin && ["pending_approval", "skipped"].includes(d.issue!.status) && (
+          <form className="confirm-row" method="post" action="/api/admin/action">
+            <input type="hidden" name="action" value="approve" /><input type="hidden" name="issue_id" value={d.issue!.id} />
+            <label className="small"><input type="checkbox" name="confirm" /> Confirm the final draft of issue #{d.issue!.issue_number} ({d.health.count} stories)</label>
+            <button className="btn" type="submit">Confirm final draft</button>
+          </form>
+        )}
         <details className="nested">
-          <summary>📰 The printed edition — preview the email subscribers will get</summary>
+          <summary>Approval history ({d.events.length} events)</summary>
+          <div className="inner"><Timeline d={d} /></div>
+        </details>
+        <details className="nested">
+          <summary>Topic mix vs the last four issues</summary>
+          <div className="inner">
+            <div className="topic-mix">
+              {d.topicMix.map((t) => (
+                <div className="row" key={t.topic}>
+                  <span>{t.topic}</span>
+                  <span className="bar" title={`this week ${t.now}, average ${t.pastAvg.toFixed(1)}`}>
+                    <span style={{ width: `${Math.min(100, t.now * 25)}%` }} /><em style={{ left: `${Math.min(100, t.pastAvg * 25)}%` }} />
+                  </span>
+                  <span>{t.now} <span className="muted">/ {t.pastAvg.toFixed(1)}</span></span>
+                </div>
+              ))}
+            </div>
+            <p className="small muted">Bar = stories this week · tick = average of the last four issues{d.pastIssues.some((p) => p.is_sample) ? " (sample past issues)" : ""}.</p>
+          </div>
+        </details>
+        <details className="nested">
+          <summary>Reserves ({d.reserves.length}) and removed stories ({d.removed.length})</summary>
+          <div className="inner">
+            {d.reserves.map((r) => <p key={r.id} className="small"><span className="tag">reserve {r.reserve_rank}</span> {r.title} <span className="muted">· {r.topic}</span></p>)}
+            {d.removed.map((r) => <p key={r.id} className="small"><span className="tag">{r.state.replace("_", " ")}</span> {r.title} <span className="muted">· {r.topic}</span></p>)}
+            {!d.reserves.length && !d.removed.length && <p className="muted small">None.</p>}
+          </div>
+        </details>
+        {email && (
+        <details className="nested">
+          <summary>Preview the email</summary>
           <div className="inner">
             <p className="small muted">Subject: {email.subject} · HTML and plain-text versions · one-click unsubscribe header included</p>
             <iframe className="preview" title="Email preview" srcDoc={email.html} sandbox="" />
           </div>
         </details>
-      )}
+        )}
+      </section>
     </>
   );
 }
@@ -361,7 +309,6 @@ function ArticlesPage({ d, sp }: { d: D; sp: SP }) {
   return (
     <>
       <section className="page-head"><div>
-        <div className="kicker">The newsroom floor · Monday to Wednesday</div>
         <h1>{d.counts.total} articles read for Shreya</h1>
         <p className="lede">{d.counts.candidates} usable · {d.counts.duplicates} duplicates · {d.counts.covered} already covered in the last four issues · {d.counts.off_topic} off-topic · {d.failedFeeds} feed{d.failedFeeds === 1 ? "" : "s"} failing. Click any row to see why it was kept or dropped.</p>
       </div></section>
@@ -441,7 +388,7 @@ function VoicePage({ d, admin }: { d: D; admin: boolean }) {
   return (
     <>
       <section className="page-head"><div>
-        <div className="kicker">The style desk · voice guide v{v.version} · {sourceWord(v.source)} · {formatIst(v.updated_at, { hour: undefined, minute: undefined })}</div>
+        <div className="kicker">Version {v.version} · {sourceWord(v.source)}</div>
         <h1>How The Dispatch sounds</h1>
         <p className="lede">The latest version is loaded from Neon into every Gemini prompt: selection and commentary.
           {v.source === "learned" ? " This version was learned by Gemini from Shreya's own past writing." : v.is_assumption ? " This is an assumed voice — no samples of Shreya's writing were provided. Use “Learn my voice” to replace it with one documented from her real newsletters." : ""}</p>
@@ -493,7 +440,6 @@ function SubscribersPage({ d, admin }: { d: D; admin: boolean }) {
   return (
     <>
       <section className="page-head"><div>
-        <div className="kicker">Circulation desk</div>
         <h1>Subscribers, unsubscribes & bounces</h1>
         <p className="lede">Gmail's one-click unsubscribe works on every email (List-Unsubscribe + List-Unsubscribe-Post), plus a signed link in the footer. Hard bounces and spam complaints arrive through signed Resend webhooks; temporary bounces are counted and only suppress after 3 in a row. Suppressed addresses never receive another issue.</p>
       </div></section>
@@ -566,7 +512,6 @@ function LogsPage({ d, sp }: { d: D; sp: SP }) {
   return (
     <>
       <section className="page-head"><div>
-        <div className="kicker">The press room</div>
         <h1>Workflow logs</h1>
         <p className="lede">{last ? `Last run: ${cap(last.job.replace(/_/g, " "))} ${last.status === "failed" ? "failed" : last.status === "skipped" ? "skipped" : "succeeded"} ${ago(last.started_at, d.at)}` : "No runs yet"} · {d.failuresThisWeek} failure{d.failuresThisWeek === 1 ? "" : "s"} this week. Every cron, manual and simulated run is recorded.</p>
       </div></section>
@@ -599,7 +544,6 @@ function HowPage() {
   return (
     <>
       <section className="page-head"><div>
-        <div className="kicker">Behind the paper</div>
         <h1>How it works</h1>
         <p className="lede">Vercel Cron (UTC) → IST: ingest <span className="mono">{SCHEDULE.ingest.cron}</span> = {SCHEDULE.ingest.when} · draft <span className="mono">{SCHEDULE.draft.cron}</span> = {SCHEDULE.draft.when} · reminder <span className="mono">{SCHEDULE.reminder.cron}</span> = {SCHEDULE.reminder.when} · send <span className="mono">{SCHEDULE.send.cron}</span> = {SCHEDULE.send.when} · report <span className="mono">{SCHEDULE.report.cron}</span> = {SCHEDULE.report.when}.</p>
       </div></section>

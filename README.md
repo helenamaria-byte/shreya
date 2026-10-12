@@ -73,10 +73,11 @@ Details: [docs/SCHEMA.md](docs/SCHEMA.md).
 
 ## The dashboard: a newspaper you can page through
 
-- **Front page:** masthead, the weekly workflow strip (Collect → Select → Review → Send → Track delivery), the status headline with a **rubber stamp** (APPROVED / SENT / NOT SENT), cards for articles, stories approved, duplicates filtered, unsubscribes & bounces and time saved, and a collage of **this week's topics** with **View this week's draft**.
-- **Turning pages:** the paper **folds** to the next page. From the front page, the collage pictures move aside first. Use the tab bar, ← → keys, or a swipe on a phone; reduced-motion users get no animation.
+- **Top navigation:** Overview · Draft · Articles · Voice · Subscribers · Logs · How it works, right under the masthead.
+- **Front page, kept deliberately simple:** one status headline with the next action, a five-step status line (Collect → Select → Review → Send → Track delivery), four numbers (articles, stories approved, unsubscribes & bounces, review time vs ~4 h by hand), a rubber stamp when approved or sent, and a collage of this week's topics around one button: **View this week's draft**.
+- **Turning pages:** the paper **folds** to the next page. From the front page the collage pictures move aside first. Arrow keys and swipes work too, and reduced-motion users get no animation.
 - **Inside pages:** the draft (illustrated story cards with keep/edit/swap/reject, Gemini's reasons, approval history, topic mix vs the last four issues, and the email as subscribers will see it), articles (why each was kept or dropped, source health), editorial voice (Learn my voice, edit, version history), subscribers (unsubscribes, bounces, delivery tracking, CSV import), logs, and how it works.
-- **Crumpled paper at the edges, flat where you read.** Topic illustrations are newsprint etchings generated once with Gemini Flash image (`scripts/generate-topic-art.ts`).
+- **Two fonts (Playfair Display headlines, Libre Caslon text), paper creased only at the edges.** Topic illustrations are newsprint etchings generated once with Gemini Flash image (`scripts/generate-topic-art.ts`).
 
 ## Setup (≤10 steps)
 

@@ -44,10 +44,10 @@ async function main() {
     await check(`GET ${path} → 200`, async () => expectStatus(await fetch(`${BASE}${path}`), 200));
   }
 
-  await check("front page: banner, workflow, what-to-do-next, unsubscribes card, draft link and all page tabs", async () => {
+  await check("front page: top navigation, workflow status, unsubscribes card, draft link, sample-data note", async () => {
     const html = (await (await fetch(`${BASE}/`)).text()).replace(/&#x27;/g, "'").replace(/&amp;/g, "&");
-    for (const s of ["Assignment prototype — sample data is labelled", "Weekly workflow", "What to do next", "Unsubscribes & bounces", "View this week's draft",
-      "Newsletter draft", "Articles", "Editorial voice", "Subscribers", "Logs", "How it works", "Track delivery"]) {
+    for (const s of ["Assignment prototype · sample data is labelled", "News collection", "Editorial review", "Unsubscribes & bounces", "View this week's draft",
+      "Draft", "Articles", "Voice", "Subscribers", "Logs", "How it works", "Track delivery"]) {
       if (!html.includes(s)) throw new Error(`missing “${s}”`);
     }
   });
