@@ -41,7 +41,9 @@ A weekly newsletter about the Indian startup and tech ecosystem, run almost hand
 | **Telegram bot** | Story-by-story review, final confirmation, reminder, late "Send now", delivery report |
 | **Resend** | Gated batch send with idempotency keys, one-click unsubscribe headers, signed webhooks for bounces/complaints |
 
-![Components map](docs/components-map.svg)
+![Components map](docs/components-map.png)
+
+High-resolution image: [docs/components-map.png](docs/components-map.png) · vector: [docs/components-map.svg](docs/components-map.svg) · source: [docs/components-map.mmd](docs/components-map.mmd)
 
 <details><summary>Weekly workflow flowchart (decision points)</summary>
 
