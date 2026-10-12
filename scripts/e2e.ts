@@ -39,16 +39,21 @@ async function main() {
     return `db ok, ${Object.keys(j.env).length} env vars present, model ${j.geminiModel}, email mode ${j.emailMode}`;
   });
 
-  for (const path of ["/", "/?open=articles", "/?open=draft", "/unsubscribe", "/diagrams/components-map.svg", "/diagrams/workflow-flowchart.svg"]) {
+  for (const path of ["/", "/?p=draft", "/?p=articles", "/?p=voice", "/?p=subscribers", "/?p=logs", "/?p=how", "/unsubscribe",
+    "/diagrams/components-map.svg", "/diagrams/workflow-flowchart.svg", "/topics/fintech.jpg"]) {
     await check(`GET ${path} → 200`, async () => expectStatus(await fetch(`${BASE}${path}`), 200));
   }
 
-  await check("dashboard shows the sample-data banner and overview", async () => {
-    const html = await (await fetch(`${BASE}/`)).text();
-    for (const s of ["Assignment prototype — sample data is labelled.", "What to do next", "News Articles", "Newsletter Draft", "Editorial Voice", "Approval Status", "Subscribers", "Workflow Logs", "How it works"]) {
+  await check("front page: banner, workflow, what-to-do-next, unsubscribes card, draft link and all page tabs", async () => {
+    const html = (await (await fetch(`${BASE}/`)).text()).replace(/&#x27;/g, "'").replace(/&amp;/g, "&");
+    for (const s of ["Assignment prototype — sample data is labelled", "Weekly workflow", "What to do next", "Unsubscribes & bounces", "View this week's draft",
+      "Newsletter draft", "Articles", "Editorial voice", "Subscribers", "Logs", "How it works", "Track delivery"]) {
       if (!html.includes(s)) throw new Error(`missing “${s}”`);
     }
-    if (/[\w.+-]+@example\.com/.test(html)) throw new Error("unmasked subscriber email on public page");
+  });
+  await check("public subscriber page masks every email", async () => {
+    const html = await (await fetch(`${BASE}/?p=subscribers`)).text();
+    if (/[\w.+-]+@example\.com/.test(html) || html.includes(process.env.OWNER_EMAIL ?? "@@none@@")) throw new Error("unmasked subscriber email on a public page");
   });
 
   for (const job of ["ingest", "draft", "reminder", "send"]) {

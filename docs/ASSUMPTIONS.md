@@ -15,8 +15,9 @@ Every decision taken without asking, so it can be reviewed or reversed.
 8. **Vercel Hobby crons** run at most once a day, anywhere within the scheduled hour (verified in the Vercel docs on 2026-10-12). Schedules are set so the whole hour lands after each IST target. Every job re-checks the IST weekday and time and the issue state before acting:
    - ingest `30 1 * * 1-3` → Mon–Wed 07:00–07:59 IST
    - draft `30 9 * * 3` → Wed 15:00–15:59 IST
-   - reminder `0 17 * * 3` → Wed 22:30–23:29 IST (any time from Wed 22:00 until the Thursday send is accepted)
+   - reminder `30 16 * * 3` → Wed 22:00–22:59 IST (any time from Wed 22:00 until the Thursday send is accepted)
    - send `30 2 * * 4` → Thu 08:00–08:59 IST
+   - delivery report `30 12 * * 4` → Thu 18:00–18:59 IST (once per sent issue)
 9. India has no DST, so IST is treated as a fixed UTC+05:30 offset when converting wall-clock times. Display and weekday logic use `Intl` with `Asia/Kolkata`.
 10. **Manual runs.** A manual "Run ingestion now" or "Run selection" without a simulated time is a deliberate override of the schedule. The reminder and send checks always obey the schedule, so a send can never happen outside Thursday. With a simulated time, every job obeys the schedule as of that moment.
 11. **Late approval.** If the issue was not approved at the Thursday send run, it becomes `skipped`. Approving it later that same Thursday (IST) offers a "Send now" button with a confirmation. From Friday on it can't be approved and stays unsent.
@@ -35,3 +36,12 @@ Every decision taken without asking, so it can be reviewed or reversed.
 22. **Sender** is `onboarding@resend.dev`; no domain is verified on the Resend account.
 23. **Neon.** The project `the-dispatch` is in AWS Singapore (`aws-ap-southeast-1`), with Vercel functions in `sin1`. Tests run on a separate Neon branch `test`, which each test truncates and re-seeds.
 24. **Admin session.** A 12-hour signed cookie (HMAC keyed by the admin password and cron secret). There are no user accounts.
+
+## Added after reading the full problem statement
+25. **Approving stories individually.** The brief says she "reviews, edits, approves or swaps stories individually". Each story has its own approval (✅ Keep). Her own edit to a story counts as approving it, and a swapped-in story starts unapproved. Per-story approval never sends anything. Only **✅ Confirm final draft** (with a confirmation step) approves the issue, and it approves any stories she hadn't kept yet, naming them in the confirmation.
+26. **Graceful bounces.** A temporary (soft) bounce increments `soft_bounces` and does not suppress. Three in a row mark the subscriber `bounced`. A delivery resets the count. Hard bounces and spam complaints suppress immediately.
+27. **Learn my voice.** Pasting at least 400 characters of her past newsletters asks Gemini Flash to document the voice as a new guide version (`source = learned`, `is_assumption = false`). The guide stays editable and versioned.
+28. **Time saved** is measured from when the draft reached Telegram to her final confirmation, compared with the 4 hours a week the brief quotes.
+29. **CSV import** accepts `email` (required) and `name` (optional) columns, up to 10,000 rows per upload. Existing addresses are never modified, so a suppressed person can't be re-activated by an import.
+30. **Dashboard design.** The earlier "collapsible sections" layout was the author's own suggestion, not part of the brief. It was replaced by a newspaper with pages, turned by a fold animation. Read-only without login; every write needs the admin password.
+31. **Topic illustrations** were generated once (`scripts/generate-topic-art.ts`, Gemini Flash image model) and are committed as static images, so drafts never depend on a slow or fragile image step. Each story shows its topic's illustration. No publisher photos are used.

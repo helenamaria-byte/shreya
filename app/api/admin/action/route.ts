@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { approveIssue, editCommentary, IssueError, rejectStory, swapStory } from "@/lib/issues";
-import { runDraft, runDryRunEmail, runIngest, runReminder, runSend, type JobResult } from "@/lib/jobs";
+import { approveIssue, approveStory, editCommentary, IssueError, rejectStory, swapStory } from "@/lib/issues";
+import { runDraft, runDryRunEmail, runIngest, runReminder, runReport, runSend, type JobResult } from "@/lib/jobs";
+import { importSubscribersCsv } from "@/lib/subscribers";
+import { learnVoice } from "@/lib/voice";
 import { now } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +42,24 @@ export async function POST(req: Request) {
       case "run_reminder": run = await runReminder(common); break;
       case "run_send": run = await runSend({ ...common, channel: "dashboard" }); break;
       case "dry_run_email": run = await runDryRunEmail(common); break;
+      case "run_report": run = await runReport(common); break;
+      case "story_keep": {
+        const r = await approveStory(Number(form.get("story_id")), "dashboard");
+        message = r.already ? "Story was already approved." : `Story ${r.story.position} approved — ${r.health.approved} of ${r.health.count} stories approved.`;
+        anchor = "draft"; break;
+      }
+      case "voice_learn": {
+        const v = await learnVoice(String(form.get("samples") ?? ""));
+        message = `Gemini learned the voice from your samples and saved it as v${v.version}. The next draft uses it.`;
+        anchor = "voice"; break;
+      }
+      case "import_csv": {
+        const file = form.get("csv");
+        const text = file && typeof file !== "string" ? await file.text() : String(form.get("csv_text") ?? "");
+        const r = await importSubscribersCsv(text);
+        message = `Imported ${r.added} new subscriber(s) from ${r.rows} row(s); ${r.alreadyListed} already listed (left unchanged), ${r.invalid} invalid${r.invalidExamples.length ? ` (e.g. ${r.invalidExamples.join(", ")})` : ""}.`;
+        anchor = "subscribers"; break;
+      }
       case "story_edit": {
         const r = await editCommentary(Number(form.get("story_id")), String(form.get("commentary") ?? ""), "dashboard");
         message = `Story ${r.story.position} updated.${r.revoked ? " Approval was revoked — re-approve required." : ""}`;
@@ -64,8 +84,9 @@ export async function POST(req: Request) {
       case "voice_save": {
         const content = String(form.get("content") ?? "").trim();
         if (content.length < 50) { message = "The voice guide looks too short; not saved."; anchor = "voice"; break; }
-        const v = await sql`INSERT INTO voice_guide (content, version, is_assumption)
-                            VALUES (${content}, (SELECT COALESCE(MAX(version), 0) + 1 FROM voice_guide), true) RETURNING version`;
+        const v = await sql`INSERT INTO voice_guide (content, version, is_assumption, source)
+                            VALUES (${content}, (SELECT COALESCE(MAX(version), 0) + 1 FROM voice_guide),
+                                    (SELECT is_assumption FROM voice_guide ORDER BY version DESC LIMIT 1), 'edited') RETURNING version`;
         message = `Voice guide saved as v${v[0].version}. The next draft uses it.`;
         anchor = "voice"; break;
       }
@@ -75,7 +96,7 @@ export async function POST(req: Request) {
     if (run) message = `${run.status === "failed" ? "Failed" : run.status === "skipped" ? "Skipped" : "Done"}: ${run.summary.replace(/^(Skipped|Failed): /, "")}${simulated ? ` (simulated ${simRaw} IST)` : ""}`;
     return reply(req, wantsJson, run?.status !== "failed", message, anchor, run);
   } catch (e: any) {
-    const msg = e instanceof IssueError ? e.message : `Error: ${String(e?.message || e).slice(0, 200)}`;
+    const msg = e instanceof IssueError || /^Paste at least/.test(e?.message) ? e.message : `Error: ${String(e?.message || e).slice(0, 200)}`;
     return reply(req, wantsJson, false, msg, "run");
   }
 }
@@ -86,7 +107,7 @@ function reply(req: Request, json: boolean, ok: boolean, message: string, anchor
   url.searchParams.set("msg", message.slice(0, 400));
   if (!ok) url.searchParams.set("err", "1");
   if (run) url.searchParams.set("run", String(run.runId));
-  url.searchParams.set("open", anchor);
-  url.hash = anchor;
+  const page = ({ draft: "draft", approval: "draft", voice: "voice", subscribers: "subscribers", logs: "logs" } as Record<string, string>)[anchor];
+  if (page) url.searchParams.set("p", page);
   return NextResponse.redirect(url, 303);
 }

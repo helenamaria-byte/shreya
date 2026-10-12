@@ -196,6 +196,22 @@ export async function sendIssue(issueId: number, opts: { channel: Channel; simul
   }
 }
 
+/** Delivery numbers for one issue (Thursday-evening report, dashboard "Track delivery"). */
+export async function deliveryStats(issueId: number) {
+  const rows = await sql`SELECT status, count(*)::int AS n FROM deliveries WHERE issue_id = ${issueId} GROUP BY status`;
+  const by = Object.fromEntries(rows.map((r) => [r.status, r.n])) as Record<string, number>;
+  const issue = (await sql`SELECT sent_at FROM issues WHERE id = ${issueId}`)[0];
+  const unsub = issue?.sent_at
+    ? (await sql`SELECT count(*)::int AS n FROM subscriber_events WHERE status = 'unsubscribed' AND created_at >= ${issue.sent_at}`)[0].n
+    : 0;
+  const total = rows.reduce((a, r) => a + r.n, 0);
+  return {
+    total, sent: (by.sent ?? 0) + (by.delivered ?? 0) + (by.bounced ?? 0) + (by.complained ?? 0),
+    delivered: by.delivered ?? 0, bounced: by.bounced ?? 0, complained: by.complained ?? 0,
+    failed: by.failed ?? 0, dryRun: by.dry_run ?? 0, pending: (by.sent ?? 0) + (by.queued ?? 0), unsubscribed: unsub as number,
+  };
+}
+
 /** Render-only dry run to the dashboard / logs; never touches deliveries or the issue status. */
 export async function previewEmail(issueId: number) {
   const issue = (await sql`SELECT * FROM issues WHERE id = ${issueId}`)[0] as Issue;

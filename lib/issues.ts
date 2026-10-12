@@ -12,7 +12,7 @@ export type Issue = {
 export type Story = {
   id: number; issue_id: number; article_id: number; position: number | null; commentary: string | null;
   original_commentary: string | null; state: string; edited_at: string | null; gemini_rationale: string | null;
-  connects_with: string | null; reserve_rank: number | null; needs_review: boolean; review_notes: string | null;
+  connects_with: string | null; reserve_rank: number | null; needs_review: boolean; review_notes: string | null; approved_at: string | null;
   title: string; url: string; source_name: string; topic: string | null; summary: string | null; published_at: string | null;
 };
 
@@ -55,13 +55,13 @@ export async function getStory(storyId: number): Promise<(Story & { issue_status
   return (rows[0] as any) ?? null;
 }
 
-export function draftHealth(stories: Pick<Story, "topic" | "needs_review">[]) {
+export function draftHealth(stories: (Pick<Story, "topic" | "needs_review"> & { approved_at?: string | null })[]) {
   const topics = distinctTopics(stories.map((s) => s.topic));
   const warnings: string[] = [];
   if (stories.length < MIN_STORIES) warnings.push(`only ${stories.length} stories (target ${MIN_STORIES}–${MAX_STORIES})`);
   if (stories.length > MAX_STORIES) warnings.push(`${stories.length} stories (target ${MIN_STORIES}–${MAX_STORIES})`);
   if (topics.length < MIN_TOPICS) warnings.push(`only ${topics.length} topic(s) (target ${MIN_TOPICS}+)`);
-  return { count: stories.length, topics, needsReview: stories.filter((s) => s.needs_review).length, warnings };
+  return { count: stories.length, topics, needsReview: stories.filter((s) => s.needs_review).length, approved: stories.filter((s) => s.approved_at).length, warnings };
 }
 
 /** End of the Thursday (IST) on which this issue is due. */
@@ -98,12 +98,24 @@ export async function editCommentary(storyId: number, text: string, channel: Cha
   const clean = text.trim().slice(0, 1200);
   if (!clean) throw new IssueError("Commentary can't be empty.");
   const check = checkCommentary(clean, `${story.title} ${story.summary ?? ""}`);
-  // Shreya's own words are kept verbatim; the check only flags.
-  await sql`UPDATE issue_stories SET commentary = ${clean}, edited_at = now(), needs_review = ${check.needsReview && /number/.test(check.notes.join())},
+  // Shreya's own words are kept verbatim; the check only flags. Her edit counts as approving that story.
+  await sql`UPDATE issue_stories SET commentary = ${clean}, edited_at = now(), approved_at = now(), needs_review = ${check.needsReview && /number/.test(check.notes.join())},
             review_notes = ${check.notes.filter((n) => /number/.test(n)).join("; ") || null} WHERE id = ${storyId}`;
   await logEvent(story.issue_id, "edited", channel, `Story ${story.position}: commentary edited`);
   const revoked = await revokeApprovalIfApproved(story.issue_id, channel, `Story ${story.position} edited`);
   return { story: (await getStory(storyId))!, revoked };
+}
+
+/** "Approves … stories individually": mark one story as approved (✅ Keep). */
+export async function approveStory(storyId: number, channel: Channel) {
+  const story = await editableStory(storyId);
+  const already = !!story.approved_at;
+  if (!already) {
+    await sql`UPDATE issue_stories SET approved_at = now() WHERE id = ${storyId}`;
+    await logEvent(story.issue_id, "story_approved", channel, `Story ${story.position} kept: ${story.title}`);
+  }
+  const health = draftHealth(await getStories(story.issue_id));
+  return { story: (await getStory(storyId))!, already, health };
 }
 
 async function renumber(issueId: number) {
@@ -132,7 +144,7 @@ async function bringInReplacement(issueId: number, position: number, remaining: 
   const keepsSpread = (topic: string | null) => distinctTopics([...remainingTopics, topic]).length >= MIN_TOPICS;
   const pick = reserves.find((r) => keepsSpread(r.topic)) ?? reserves[0];
   if (pick) {
-    await sql`UPDATE issue_stories SET state = 'selected', position = ${position}, reserve_rank = NULL WHERE id = ${pick.id}`;
+    await sql`UPDATE issue_stories SET state = 'selected', position = ${position}, reserve_rank = NULL, approved_at = NULL WHERE id = ${pick.id}`;
     return { id: pick.id, via: "reserve" as const };
   }
   const issue = (await getIssue(issueId))!;
@@ -191,7 +203,12 @@ export async function approveIssue(issueId: number, via: "telegram" | "dashboard
   const rows = await sql`UPDATE issues SET status = 'approved', approved_at = ${at.toISOString()}, approved_via = ${via}
                          WHERE id = ${issueId} AND status = ${issue.status} RETURNING id`;
   if (!rows.length) return { ok: false, message: "The issue changed while approving; please try again.", offerSendNow: false, warnings: [] };
-  const health = draftHealth(await getStories(issueId));
+  const before = await getStories(issueId);
+  const unapproved = before.filter((s) => !s.approved_at).map((s) => s.position);
+  // Confirming the final draft approves every story in it.
+  await sql`UPDATE issue_stories SET approved_at = COALESCE(approved_at, ${at.toISOString()}) WHERE issue_id = ${issueId} AND state = 'selected'`;
+  const health = draftHealth(before);
+  if (unapproved.length) health.warnings.push(`stories ${unapproved.join(", ")} were approved by the final confirmation, not individually`);
   await logEvent(issueId, "approved", via, `${health.count} stories, ${health.topics.length} topics${health.warnings.length ? "; warnings: " + health.warnings.join(", ") : ""}`);
   const offerSendNow = at >= sendAt;
   return {

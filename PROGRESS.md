@@ -12,6 +12,14 @@
 - [~] Section 12 — Vercel deployed + env + crons + Resend + Telegram webhooks ✅; GitHub ✅ pushed to https://github.com/helenamaria-byte/shreya (repo created by the user; token could not create repos)
 - [x] Section 13 — README, SCHEMA, ASSUMPTIONS, diagrams, sample run, screenshots, RUBRIC (all rows ✅)
 
+## Round 2 (after reading Problem Statement 17)
+- [x] Per-story approval (✅ Keep) in Telegram + dashboard; final confirmation names unkept stories
+- [x] Reminder cron moved to 30 16 * * 3 (22:00–22:59 IST)
+- [x] Soft bounces (3 in a row → suppressed); Thursday 6 PM delivery report cron
+- [x] Learn my voice (Gemini) · CSV subscriber import · time-saved card
+- [x] Newspaper redesign: crumpled paper, fold page-turn, collage scatter, rubber stamp, 7 pages, Gemini-generated topic art
+- [x] 66/66 tests, e2e all passing on production, docs + rubric + screenshots updated
+
 ## Production
 - URL: https://the-dispatch-murex.vercel.app (Vercel project `the-dispatch`)
 - Resend webhook id 39f6cb43-15e5-42f3-bda5-f93e09338af8 → /api/resend/webhook

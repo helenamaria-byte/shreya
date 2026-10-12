@@ -1,13 +1,19 @@
-E2E against https://the-dispatch-murex.vercel.app at 2026-10-12T11:28:40.091Z
+E2E against https://the-dispatch-murex.vercel.app at 2026-10-12T14:03:41.162Z
 
 PASS  health: DB reachable and env var names present (values never returned) — db ok, 16 env vars present, model gemini-3.8-flash, email mode test
 PASS  GET / → 200
-PASS  GET /?open=articles → 200
-PASS  GET /?open=draft → 200
+PASS  GET /?p=draft → 200
+PASS  GET /?p=articles → 200
+PASS  GET /?p=voice → 200
+PASS  GET /?p=subscribers → 200
+PASS  GET /?p=logs → 200
+PASS  GET /?p=how → 200
 PASS  GET /unsubscribe → 200
 PASS  GET /diagrams/components-map.svg → 200
 PASS  GET /diagrams/workflow-flowchart.svg → 200
-PASS  dashboard shows the sample-data banner and overview
+PASS  GET /topics/fintech.jpg → 200
+PASS  front page: banner, workflow, what-to-do-next, unsubscribes card, draft link and all page tabs
+PASS  public subscriber page masks every email
 PASS  cron /api/cron/ingest without secret → 401
 PASS  cron /api/cron/ingest with wrong secret → 401
 PASS  cron /api/cron/draft without secret → 401
@@ -21,6 +27,6 @@ PASS  resend webhook with bad signature → 401
 PASS  unsubscribe with tampered token → 400
 PASS  admin action without login → 401
 PASS  admin login with wrong password is refused
-PASS  admin login + dry-run email (no send) works — Done: Dry run: issue #5 rendered (9 stories); would go to 2 test-mode recipient(s). Nothing sent.
+PASS  admin login + dry-run email (no send) works — Done: Dry run: issue #5 rendered (7 stories); would go to 2 test-mode recipient(s). Nothing sent.
 
 All checks passed

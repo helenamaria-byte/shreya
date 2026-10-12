@@ -90,18 +90,20 @@ export function formatIstDate(d: Date | string): string {
 // Weekly schedule (IST). Vercel Hobby crons fire somewhere inside the scheduled
 // hour, so every job re-checks the IST time here before acting.
 // ---------------------------------------------------------------------------
-export type Job = "ingest" | "draft" | "reminder" | "send";
+export type Job = "ingest" | "draft" | "reminder" | "send" | "report";
 
 export const SCHEDULE = {
   ingest: { label: "Collect", when: "Mon–Wed ~07:00 IST", cron: "30 1 * * 1-3" },
   draft: { label: "Select + draft", when: "Wed ~15:00 IST", cron: "30 9 * * 3" },
-  reminder: { label: "Reminder", when: "Wed after 22:00 IST", cron: "0 17 * * 3" },
+  reminder: { label: "Reminder", when: "Wed 22:00 IST", cron: "30 16 * * 3" },
   send: { label: "Send", when: "Thu ~08:00 IST", cron: "30 2 * * 4" },
+  report: { label: "Delivery report", when: "Thu ~18:00 IST", cron: "30 12 * * 4" },
 } as const;
 
 export const DRAFT_AT = 15 * 60;      // Wed 15:00
 export const REMINDER_AT = 22 * 60;   // Wed 22:00
 export const SEND_AT = 8 * 60;        // Thu 08:00
+export const REPORT_AT = 18 * 60;     // Thu 18:00
 
 export function scheduleGate(job: Job, d: Date): { act: boolean; reason: string } {
   const { weekday, minutesOfDay } = istParts(d);
@@ -123,5 +125,9 @@ export function scheduleGate(job: Job, d: Date): { act: boolean; reason: string 
       return weekday === 4 && minutesOfDay >= SEND_AT
         ? { act: true, reason: `${label} is Thursday at/after 08:00` }
         : { act: false, reason: `${label} is not Thursday after 08:00` };
+    case "report":
+      return (weekday === 4 && minutesOfDay >= REPORT_AT) || weekday >= 5
+        ? { act: true, reason: `${label} is after Thursday 18:00` }
+        : { act: false, reason: `${label} is before Thursday 18:00` };
   }
 }

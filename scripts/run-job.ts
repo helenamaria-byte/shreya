@@ -1,7 +1,7 @@
 import { loadEnv } from "./load-env";
 loadEnv();
 
-/** Usage: tsx scripts/run-job.ts <ingest|draft|reminder|send|dry_run> [--at=YYYY-MM-DDTHH:mm (IST)] [--force] [--broken-feed] */
+/** Usage: tsx scripts/run-job.ts <ingest|draft|reminder|send|report|dry_run> [--at=YYYY-MM-DDTHH:mm (IST)] [--force] [--broken-feed] */
 async function main() {
   const [job, ...flags] = process.argv.slice(2);
   const atFlag = flags.find((f) => f.startsWith("--at="))?.slice(5);
@@ -15,6 +15,7 @@ async function main() {
     reminder: () => jobs.runReminder(common),
     send: () => jobs.runSend(common),
     dry_run: () => jobs.runDryRunEmail(common),
+    report: () => jobs.runReport(common),
   };
   if (!fn[job]) throw new Error(`unknown job ${job}`);
   console.log(JSON.stringify(await fn[job](), null, 2));

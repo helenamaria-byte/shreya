@@ -2,63 +2,74 @@
  RUN  v5.0.4 C:/Users/HELENA/OneDrive/Desktop/Shreya/the-dispatch
 
  ✓ tests/workflow.test.ts > Asia/Kolkata schedule (F1) > maps the Vercel cron UTC times to the intended IST times 4ms
- ✓ tests/workflow.test.ts > Asia/Kolkata schedule (F1) > decides act/skip for each job at the simulated times 3ms
- ✓ tests/workflow.test.ts > jobs respect simulated time (F3) > ingest and draft skip outside their windows and log the run 8669ms
- ✓ tests/workflow.test.ts > jobs respect simulated time (F3) > Wed 15:00 draft with too few candidates → insufficient_stories + Telegram 'Draft anyway' 8347ms
- ✓ tests/workflow.test.ts > Wednesday 10 PM reminder (F2) > is not sent before 22:00, is sent once after 22:00 when pending, never twice 9346ms
- ✓ tests/workflow.test.ts > Wednesday 10 PM reminder (F2) > is not sent when the issue is already approved 9000ms
- ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > sends nothing for a pending_approval issue: zero emails, zero delivery rows 8766ms
- ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > sends nothing for a rejected issue: zero emails, zero delivery rows 8701ms
- ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > sends nothing for a skipped issue: zero emails, zero delivery rows 8969ms
- ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > sends nothing for a insufficient_stories issue: zero emails, zero delivery rows 8808ms
- ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > sends nothing for a collecting issue: zero emails, zero delivery rows 8680ms
- ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > Thursday send run with a pending issue → skipped, nothing sent, Shreya notified 9320ms
- ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > approved → sends once to test recipients only; re-running sends nothing extra 9651ms
- ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > two concurrent sends: only one claims the issue 8957ms
- ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > dry_run mode records dry_run deliveries without calling Resend 9019ms
- ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > simulated time can never trigger a live send 8363ms
- ✓ tests/workflow.test.ts > edits after approval revoke approval (invariant 5) > edit, swap and reject each revert approved → pending_approval 11354ms
- ✓ tests/workflow.test.ts > edits after approval revoke approval (invariant 5) > approval after Thursday is refused; late approval on Thursday offers Send now 9163ms
- ✓ tests/workflow.test.ts > suppression (invariants 3, 4) > test mode only returns active test recipients; live mode never returns suppressed addresses 9434ms
- ✓ tests/workflow.test.ts > suppression (invariants 3, 4) > an approved send in test mode never emails @example.com sample subscribers 9806ms
- ✓ tests/security.test.ts > unsubscribe (G4) > valid token unsubscribes via one-click POST; tampered token is rejected 9890ms
- ✓ tests/security.test.ts > unsubscribe (G4) > every sent email carries List-Unsubscribe + one-click headers and an unsubscribe link 10248ms
- ✓ tests/security.test.ts > Resend webhook (G5) > rejects a bad signature 8548ms
- ✓ tests/security.test.ts > Resend webhook (G5) > hard bounce and complaint suppress the subscriber; delivery rows update 11079ms
- ✓ tests/security.test.ts > Telegram webhook security (E5) and cron auth (invariant 7) > wrong secret → 401; wrong chat → ignored with no state change 18762ms
- ✓ tests/security.test.ts > Telegram webhook security (E5) and cron auth (invariant 7) > cron routes reject requests without CRON_SECRET 8638ms
- ✓ tests/security.test.ts > Telegram webhook security (E5) and cron auth (invariant 7) > dashboard write actions require the admin session 9830ms
- ✓ tests/security.test.ts > Telegram review flow (E2, E3, E4) > Edit via ForceReply and /edit update the commentary in Neon 10967ms
- ✓ tests/security.test.ts > Telegram review flow (E2, E3, E4) > an expired edit prompt (30 min) is not applied 10420ms
- ✓ tests/security.test.ts > Telegram review flow (E2, E3, E4) > Swap uses the reserves and keeps the position; Reject removes and warns below 8 stories 10617ms
- ✓ tests/security.test.ts > Telegram review flow (E2, E3, E4) > Approve asks for confirmation, then stores status, time and channel 10103ms
- ✓ tests/security.test.ts > Telegram review flow (E2, E3, E4) > approving with fewer than 8 stories warns but is allowed 9702ms
- ✓ tests/dedup.test.ts > URL normalisation (C2) > strips tracking params, fragments, www, trailing slash and lowercases the host 2ms
+ ✓ tests/workflow.test.ts > Asia/Kolkata schedule (F1) > decides act/skip for each job at the simulated times 2ms
+ ✓ tests/workflow.test.ts > jobs respect simulated time (F3) > ingest and draft skip outside their windows and log the run 8238ms
+ ✓ tests/workflow.test.ts > jobs respect simulated time (F3) > Wed 15:00 draft with too few candidates → insufficient_stories + Telegram 'Draft anyway' 7783ms
+ ✓ tests/workflow.test.ts > Wednesday 10 PM reminder (F2) > is not sent before 22:00, is sent once after 22:00 when pending, never twice 8818ms
+ ✓ tests/workflow.test.ts > Wednesday 10 PM reminder (F2) > is not sent when the issue is already approved 8559ms
+ ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > sends nothing for a pending_approval issue: zero emails, zero delivery rows 10067ms
+ ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > sends nothing for a rejected issue: zero emails, zero delivery rows 8774ms
+ ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > sends nothing for a skipped issue: zero emails, zero delivery rows 9340ms
+ ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > sends nothing for a insufficient_stories issue: zero emails, zero delivery rows 8258ms
+ ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > sends nothing for a collecting issue: zero emails, zero delivery rows 8776ms
+ ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > Thursday send run with a pending issue → skipped, nothing sent, Shreya notified 8444ms
+ ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > approved → sends once to test recipients only; re-running sends nothing extra 9157ms
+ ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > two concurrent sends: only one claims the issue 8631ms
+ ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > dry_run mode records dry_run deliveries without calling Resend 9130ms
+ ✓ tests/workflow.test.ts > approval gate (G1) and duplicate-send guard (G2) > simulated time can never trigger a live send 7162ms
+ ✓ tests/workflow.test.ts > edits after approval revoke approval (invariant 5) > edit, swap and reject each revert approved → pending_approval 10804ms
+ ✓ tests/workflow.test.ts > edits after approval revoke approval (invariant 5) > approval after Thursday is refused; late approval on Thursday offers Send now 8185ms
+ ✓ tests/workflow.test.ts > suppression (invariants 3, 4) > test mode only returns active test recipients; live mode never returns suppressed addresses 7432ms
+ ✓ tests/workflow.test.ts > suppression (invariants 3, 4) > an approved send in test mode never emails @example.com sample subscribers 9102ms
+ ✓ tests/additions.test.ts > approve stories individually (PDF: “approves or swaps stories individually”) > ✅ Keep marks one story approved, updates its card, and counts progress 9349ms
+ ✓ tests/additions.test.ts > approve stories individually (PDF: “approves or swaps stories individually”) > approving the last story offers the final confirmation 11044ms
+ ✓ tests/additions.test.ts > approve stories individually (PDF: “approves or swaps stories individually”) > Shreya's edit approves that story; a swapped-in story starts unapproved 9371ms
+ ✓ tests/additions.test.ts > approve stories individually (PDF: “approves or swaps stories individually”) > the final confirmation names unapproved stories and then approves them all 10686ms
+ ✓ tests/additions.test.ts > graceful bounces (PDF: “bounces must be handled gracefully”) > a temporary bounce is counted, not suppressed; three in a row suppress; a delivery resets the count 9500ms
+ ✓ tests/additions.test.ts > Thursday-evening delivery report > waits until Thu 18:00, reports once for a sent issue, never twice 9887ms
+ ✓ tests/additions.test.ts > Thursday-evening delivery report > does nothing for an issue that was not sent 8832ms
+ ✓ tests/additions.test.ts > Learn my voice (documented editorial voice from her own writing) > asks Gemini to document the voice from the samples and stores a new learned version 10015ms
+ ✓ tests/additions.test.ts > Learn my voice (documented editorial voice from her own writing) > refuses samples that are too short 11978ms
+ ✓ tests/additions.test.ts > subscriber CSV import (the real 2,200-person list) > adds valid new rows, skips duplicates/invalid, and never re-activates suppressed people 8300ms
+ ✓ tests/additions.test.ts > subscriber CSV import (the real 2,200-person list) > accepts a header-less one-column list 7837ms
+ ✓ tests/security.test.ts > unsubscribe (G4) > valid token unsubscribes via one-click POST; tampered token is rejected 7595ms
+ ✓ tests/security.test.ts > unsubscribe (G4) > every sent email carries List-Unsubscribe + one-click headers and an unsubscribe link 8287ms
+ ✓ tests/security.test.ts > Resend webhook (G5) > rejects a bad signature 7050ms
+ ✓ tests/security.test.ts > Resend webhook (G5) > hard bounce and complaint suppress the subscriber; delivery rows update 9394ms
+ ✓ tests/security.test.ts > Telegram webhook security (E5) and cron auth (invariant 7) > wrong secret → 401; wrong chat → ignored with no state change 8338ms
+ ✓ tests/security.test.ts > Telegram webhook security (E5) and cron auth (invariant 7) > cron routes reject requests without CRON_SECRET 7168ms
+ ✓ tests/security.test.ts > Telegram webhook security (E5) and cron auth (invariant 7) > dashboard write actions require the admin session 7982ms
+ ✓ tests/security.test.ts > Telegram review flow (E2, E3, E4) > Edit via ForceReply and /edit update the commentary in Neon 8971ms
+ ✓ tests/security.test.ts > Telegram review flow (E2, E3, E4) > an expired edit prompt (30 min) is not applied 8681ms
+ ✓ tests/security.test.ts > Telegram review flow (E2, E3, E4) > Swap uses the reserves and keeps the position; Reject removes and warns below 8 stories 8961ms
+ ✓ tests/security.test.ts > Telegram review flow (E2, E3, E4) > Approve asks for confirmation, then stores status, time and channel 8404ms
+ ✓ tests/security.test.ts > Telegram review flow (E2, E3, E4) > approving with fewer than 8 stories warns but is allowed 8078ms
+ ✓ tests/dedup.test.ts > URL normalisation (C2) > strips tracking params, fragments, www, trailing slash and lowercases the host 14ms
  ✓ tests/dedup.test.ts > URL normalisation (C2) > keeps meaningful query params, sorted 1ms
  ✓ tests/dedup.test.ts > URL normalisation (C2) > leaves non-Google links untouched when resolving Google News links 0ms
- ✓ tests/dedup.test.ts > URL normalisation (C2) > strips HTML and decodes entities from summaries 0ms
- ✓ tests/dedup.test.ts > within-week dedup in Neon (C2) > drops exact re-fetches and flags the same URL with tracking params as same_url 8156ms
- ✓ tests/dedup.test.ts > within-week dedup in Neon (C2) > flags near-identical titles from different outlets as similar_title 7873ms
- ✓ tests/dedup.test.ts > previous four newsletters are excluded (C3) > marks an article matching a story from the last four issues as covered_in_past_issue and drops it from candidates 7834ms
- ✓ tests/dedup.test.ts > previous four newsletters are excluded (C3) > also catches the same link with tracking parameters 7157ms
- ✓ tests/dedup.test.ts > graceful feed failure (B4) > logs a broken feed as failed while the run succeeds 7934ms
- ✓ tests/voice.test.ts > voice guide from Neon drives the prompts (D5) and a full draft run (D1–D4) > uses the latest voice guide version; editing the guide changes the next prompt 11113ms
- ✓ tests/voice.test.ts > voice guide from Neon drives the prompts (D5) and a full draft run (D1–D4) > stores 9 selected + 5 reserves with rationale and 2–3 sentence commentary, then sends the draft to Telegram 9016ms
- ✓ tests/voice.test.ts > voice guide from Neon drives the prompts (D5) and a full draft run (D1–D4) > an invalid model selection is retried once with the errors, then repaired in code 12888ms
- ✓ tests/selection.test.ts > selection validator (D1, D2) > accepts a valid 9-story, 5-topic selection 2ms
- ✓ tests/selection.test.ts > selection validator (D1, D2) > rejects too few and too many stories 2ms
- ✓ tests/selection.test.ts > selection validator (D1, D2) > rejects fewer than 3 topics 3ms
- ✓ tests/selection.test.ts > selection validator (D1, D2) > rejects unknown IDs, duplicates and past-issue overlap 5ms
- ✓ tests/selection.test.ts > selection validator (D1, D2) > repairs deterministically: drops invalid IDs, fills to 8 and restores 3 topics 6ms
+ ✓ tests/dedup.test.ts > URL normalisation (C2) > strips HTML and decodes entities from summaries 3ms
+ ✓ tests/dedup.test.ts > within-week dedup in Neon (C2) > drops exact re-fetches and flags the same URL with tracking params as same_url 7889ms
+ ✓ tests/dedup.test.ts > within-week dedup in Neon (C2) > flags near-identical titles from different outlets as similar_title 7565ms
+ ✓ tests/dedup.test.ts > previous four newsletters are excluded (C3) > marks an article matching a story from the last four issues as covered_in_past_issue and drops it from candidates 7383ms
+ ✓ tests/dedup.test.ts > previous four newsletters are excluded (C3) > also catches the same link with tracking parameters 7369ms
+ ✓ tests/dedup.test.ts > graceful feed failure (B4) > logs a broken feed as failed while the run succeeds 7413ms
+ ✓ tests/voice.test.ts > voice guide from Neon drives the prompts (D5) and a full draft run (D1–D4) > uses the latest voice guide version; editing the guide changes the next prompt 11619ms
+ ✓ tests/voice.test.ts > voice guide from Neon drives the prompts (D5) and a full draft run (D1–D4) > stores 9 selected + 5 reserves with rationale and 2–3 sentence commentary, then sends the draft to Telegram 9949ms
+ ✓ tests/voice.test.ts > voice guide from Neon drives the prompts (D5) and a full draft run (D1–D4) > an invalid model selection is retried once with the errors, then repaired in code 9805ms
+ ✓ tests/selection.test.ts > selection validator (D1, D2) > accepts a valid 9-story, 5-topic selection 3ms
+ ✓ tests/selection.test.ts > selection validator (D1, D2) > rejects too few and too many stories 0ms
+ ✓ tests/selection.test.ts > selection validator (D1, D2) > rejects fewer than 3 topics 0ms
+ ✓ tests/selection.test.ts > selection validator (D1, D2) > rejects unknown IDs, duplicates and past-issue overlap 0ms
+ ✓ tests/selection.test.ts > selection validator (D1, D2) > repairs deterministically: drops invalid IDs, fills to 8 and restores 3 topics 1ms
  ✓ tests/selection.test.ts > selection validator (D1, D2) > trims an over-long selection to 10 0ms
  ✓ tests/selection.test.ts > prompt content (D3, D5, D6) > states the editorial criteria verbatim and includes voice guide + past headlines 0ms
  ✓ tests/selection.test.ts > prompt content (D3, D5, D6) > sufficiency needs 12 candidates and 3 topics 0ms
  ✓ tests/selection.test.ts > commentary checks (D4, D6) > counts sentences 1ms
- ✓ tests/selection.test.ts > commentary checks (D4, D6) > trims to 3 sentences and flags fewer than 2 1ms
+ ✓ tests/selection.test.ts > commentary checks (D4, D6) > trims to 3 sentences and flags fewer than 2 0ms
  ✓ tests/selection.test.ts > commentary checks (D4, D6) > flags numbers that are not in the source 1ms
 
- Test Files  5 passed (5)
-      Tests  55 passed (55)
-   Start at  16:51:14
-   Duration  367.45s (tests 100%)
+ Test Files  6 passed (6)
+      Tests  66 passed (66)
+   Start at  19:33:41
+   Duration  434.27s (tests 100%)
 

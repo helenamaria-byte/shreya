@@ -56,8 +56,8 @@ describe("voice guide from Neon drives the prompts (D5) and a full draft run (D1
     // header + 9 story cards + footer
     const sent = calls.telegram.filter((c) => c.method === "sendMessage");
     expect(sent).toHaveLength(11);
-    expect(JSON.stringify(sent[1].body.reply_markup)).toMatch(/Edit.*Swap.*Reject/);
-    expect(JSON.stringify(sent[10].body.reply_markup)).toMatch(/Approve draft.*Reject entire draft/);
+    expect(JSON.stringify(sent[1].body.reply_markup)).toMatch(/Keep.*Edit.*Swap.*Reject/);
+    expect(JSON.stringify(sent[10].body.reply_markup)).toMatch(/Confirm final draft.*Reject entire draft/);
     for (const m of sent) expect(m.body.text.length).toBeLessThanOrEqual(4096);
   });
 

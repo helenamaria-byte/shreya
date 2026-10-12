@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { sql } from "./db";
 import { sendIssue } from "./email";
 import {
-  addReplacement, approveIssue, draftHealth, editCommentary, getIssue, getIssueByWeek, getStories, getStory, IssueError,
+  addReplacement, approveIssue, approveStory, draftHealth, editCommentary, getIssue, getIssueByWeek, getStories, getStory, IssueError,
   logEvent, rejectIssue, rejectStory, swapStory, type Issue, type Story,
 } from "./issues";
 import { formatIst, now, weekKey } from "./time";
@@ -51,33 +51,34 @@ export function headerText(issue: Issue, stories: Story[]) {
   const h = draftHealth(stories);
   const lines = [
     `<b>📰 The Dispatch — Issue #${issue.issue_number} draft</b>`,
-    `Week ${issue.week_key} · ${h.count} stories · ${h.topics.length} topics`,
+    `Week ${issue.week_key} · ${h.count} stories · ${h.topics.length} topics · ${h.approved} of ${h.count} approved`,
     `Topics: ${h.topics.join(", ") || "—"}`,
   ];
   if (h.needsReview) lines.push(`⚠️ ${h.needsReview} stor${h.needsReview === 1 ? "y needs" : "ies need"} review (numbers not found in the source)`);
   for (const w of h.warnings) lines.push(`⚠️ ${w}`);
-  lines.push("", "Edit, swap or reject any story below, then approve at the bottom. Nothing is emailed until you approve.");
+  lines.push("", "For each story: ✅ Keep · ✏️ Edit · 🔄 Swap · ❌ Reject. Then confirm the final draft at the bottom. Nothing is emailed until you confirm.");
   return lines.join("\n");
 }
 
 export function storyText(s: Story) {
   return [
     `<b>${s.position ?? "–"}. <a href="${esc(s.url)}">${esc(s.title)}</a></b>`,
-    `<i>${esc(s.source_name)} · ${esc(s.topic ?? "Other")}</i>`,
+    `<i>${esc(s.source_name)} · ${esc(s.topic ?? "Other")}</i>${s.approved_at ? "  ✅ approved" : ""}`,
     "",
     esc(s.commentary ?? ""),
     s.needs_review ? `\n⚠️ Needs review: ${esc(s.review_notes ?? "")}` : "",
   ].join("\n").trim();
 }
 
-export const storyKeyboard = (s: Pick<Story, "id">): Keyboard => [[
+export const storyKeyboard = (s: Pick<Story, "id"> & { approved_at?: string | null }): Keyboard => [[
+  { text: s.approved_at ? "✅ Kept" : "✅ Keep", callback_data: `k:${s.id}` },
   { text: "✏️ Edit", callback_data: `e:${s.id}` },
   { text: "🔄 Swap", callback_data: `s:${s.id}` },
   { text: "❌ Reject", callback_data: `r:${s.id}` },
 ]];
 
 export const footerKeyboard = (issueId: number): Keyboard => [[
-  { text: "✅ Approve draft", callback_data: `a:${issueId}` },
+  { text: "✅ Confirm final draft", callback_data: `a:${issueId}` },
   { text: "🚫 Reject entire draft", callback_data: `x:${issueId}` },
 ]];
 
@@ -87,7 +88,7 @@ export async function sendDraft(issueId: number) {
   const stories = await getStories(issueId);
   await send(headerText(issue, stories));
   for (const s of stories) await send(storyText(s), storyKeyboard(s));
-  await send(`<b>Ready?</b> Approve issue #${issue.issue_number} to send it on Thursday at 8 AM IST.`, footerKeyboard(issueId));
+  await send(`<b>Ready?</b> When you're happy with every story, confirm the final draft of issue #${issue.issue_number}. It goes out Thursday at 8 AM IST, only after you confirm.`, footerKeyboard(issueId));
   await sql`UPDATE issues SET draft_sent_to_telegram_at = now() WHERE id = ${issueId}`;
   await logEvent(issueId, "draft_sent", "telegram", `${stories.length} story cards sent to Telegram`);
 }
@@ -117,7 +118,8 @@ const HELP = [
   "/edit &lt;position&gt; &lt;text&gt; — replace a story's commentary",
   "/help — this message",
   "",
-  "Story buttons: ✏️ Edit · 🔄 Swap (uses reserves) · ❌ Reject. Approve at the bottom of the draft.",
+  "Story buttons: ✅ Keep (approve this story) · ✏️ Edit · 🔄 Swap (uses reserves) · ❌ Reject.",
+  "Then ✅ Confirm final draft at the bottom. Nothing is emailed until you confirm.",
 ].join("\n");
 
 async function currentIssue(at: Date) {
@@ -216,6 +218,18 @@ async function handleCallback(cb: any, at: Date): Promise<string> {
         });
         return "edit: awaiting reply";
       }
+      case "k": {
+        const r = await approveStory(id, "telegram");
+        await answer(cb.id, r.already ? "Already approved" : `Kept — ${r.health.approved} of ${r.health.count} approved`);
+        const messageId = cb.message?.message_id;
+        if (messageId && !r.already) {
+          await tg("editMessageReplyMarkup", { chat_id: cbChat, message_id: messageId, reply_markup: { inline_keyboard: storyKeyboard(r.story) } }).catch(() => {});
+        }
+        if (!r.already && r.health.approved === r.health.count) {
+          await send(`✅ All ${r.health.count} stories approved. Confirm the final draft to schedule it for Thursday 8 AM.`, footerKeyboard(r.story.issue_id));
+        }
+        return r.already ? "keep: already" : "story kept";
+      }
       case "s": {
         await answer(cb.id, "Swapping…");
         const r = await swapStory(id, "telegram");
@@ -244,8 +258,11 @@ async function handleCallback(cb: any, at: Date): Promise<string> {
         const stories = issue ? await getStories(id) : [];
         const h = draftHealth(stories);
         await answer(cb.id);
+        const pending = stories.filter((s) => !s.approved_at).map((s) => s.position);
         await send(
-          `Approve issue #${issue?.issue_number} with ${h.count} stories for Thursday 8 AM?${h.warnings.length ? `\n⚠️ Note: ${h.warnings.join("; ")}. You can still approve — it's your call.` : ""}`,
+          `Approve issue #${issue?.issue_number} with ${h.count} stories for Thursday 8 AM?` +
+          `\n${h.approved} of ${h.count} stories approved individually${pending.length ? ` — confirming also approves ${pending.length === 1 ? "story" : "stories"} ${pending.join(", ")}` : ""}.` +
+          `${h.warnings.length ? `\n⚠️ Note: ${h.warnings.join("; ")}. You can still approve — it's your call.` : ""}`,
           [[{ text: "Yes, approve", callback_data: `ay:${id}` }, { text: "No", callback_data: `an:${id}` }]],
         );
         return "approve: confirm asked";

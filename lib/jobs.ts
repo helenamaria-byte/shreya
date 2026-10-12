@@ -2,7 +2,7 @@ import { query, sql } from "./db";
 import {
   candidates, checkCommentary, latestVoiceGuide, pastHeadlines, selectStories, sufficiency, writeCommentary,
 } from "./editorial";
-import { previewEmail, recipients, sendIssue, effectiveMode } from "./email";
+import { deliveryStats, previewEmail, recipients, sendIssue, effectiveMode } from "./email";
 import { ingest } from "./ingest";
 import { getOrCreateIssue, getIssueByWeek, getStories, logEvent, type Channel } from "./issues";
 import { BROKEN_TEST_SOURCE } from "./sources";
@@ -34,7 +34,7 @@ async function recordRun(job: string, trigger: Trigger, at: Date, simulated: boo
 /** Cron and simulated runs obey the IST schedule; a plain manual run of ingest/draft is a deliberate override. */
 function gate(job: Job, trigger: Trigger, at: Date, simulated: boolean, force = false) {
   const g = scheduleGate(job, at);
-  const enforce = job === "reminder" || job === "send" || trigger === "cron" || simulated || (trigger === "test" && !force);
+  const enforce = job === "reminder" || job === "send" || job === "report" || trigger === "cron" || simulated || (trigger === "test" && !force);
   return enforce && !g.act ? g : null;
 }
 
@@ -166,7 +166,7 @@ export async function runReminder(o: { trigger: Trigger; at?: Date; simulated?: 
     }
     const tg = await notify(
       `⏰ <b>Reminder:</b> issue #${issue.issue_number} is still waiting for your approval. It goes out Thursday at 8 AM IST only if approved.`,
-      [[{ text: "✅ Approve draft", callback_data: `a:${issue.id}` }]],
+      [[{ text: "✅ Confirm final draft", callback_data: `a:${issue.id}` }]],
     );
     await logEvent(issue.id, "reminder_sent", "cron", `Telegram ${tg}`);
     return { status: "success", summary: `Reminder sent for issue #${issue.issue_number} (Telegram ${tg})` };
@@ -196,7 +196,7 @@ export async function runSend(o: { trigger: Trigger; at?: Date; simulated?: bool
     const tg = await notify(
       `🚫 Issue #${issue.issue_number} was <b>not approved</b>, so nothing was sent this morning.\n` +
       `If you approve it today (Thursday), you'll get a "Send now" button. After today it stays unsent.`,
-      issue.status === "pending_approval" ? [[{ text: "✅ Approve draft", callback_data: `a:${issue.id}` }]] : undefined,
+      issue.status === "pending_approval" ? [[{ text: "✅ Confirm final draft", callback_data: `a:${issue.id}` }]] : undefined,
     );
     return { status: "success", summary: `Issue #${issue.issue_number} not approved (${issue.status}) → skipped, nothing sent (Telegram ${tg})` };
   });
@@ -222,4 +222,28 @@ export async function runDryRunEmail(o: { trigger: Trigger; at?: Date; simulated
   });
 }
 
-export const JOBS = { ingest: runIngest, draft: runDraft, reminder: runReminder, send: runSend } as const;
+// ---------------------------------------------------------------------------
+/** Thursday-evening delivery report to Shreya (once per issue). */
+export async function runReport(o: { trigger: Trigger; at?: Date; simulated?: boolean }) {
+  const at = o.at ?? now();
+  return recordRun("report", o.trigger, at, !!o.simulated, async () => {
+    const blocked = gate("report", o.trigger, at, !!o.simulated);
+    if (blocked) return { status: "skipped", summary: `Skipped: ${blocked.reason}` };
+    const issue = await getIssueByWeek(weekKey(at));
+    if (!issue || issue.status !== "sent") return { status: "skipped", summary: `Skipped: ${issue ? `issue #${issue.issue_number} is ${issue.status.replace(/_/g, " ")}` : "no issue this week"}` };
+    const claimed = await sql`UPDATE issues SET report_sent_at = ${at.toISOString()} WHERE id = ${issue.id} AND report_sent_at IS NULL RETURNING id`;
+    if (!claimed.length) return { status: "skipped", summary: `Skipped: report for issue #${issue.issue_number} already sent` };
+    const s = await deliveryStats(issue.id);
+    const tg = await notify(
+      `📊 <b>Issue #${issue.issue_number} delivery report</b>
+` +
+      `${s.delivered} delivered · ${s.pending} awaiting confirmation · ${s.bounced} bounced · ${s.complained} marked as spam · ${s.failed} failed
+` +
+      `${s.unsubscribed} unsubscribed since sending. Bounced, spam-marked and unsubscribed addresses are suppressed from future issues automatically.`,
+    );
+    await logEvent(issue.id, "report_sent", "cron", `${s.delivered} delivered, ${s.bounced} bounced, ${s.complained} complaints, ${s.unsubscribed} unsubscribed`);
+    return { status: "success", summary: `Report for issue #${issue.issue_number}: ${s.delivered} delivered, ${s.bounced} bounced, ${s.complained} complaints, ${s.unsubscribed} unsubscribed (Telegram ${tg})`, details: s };
+  });
+}
+
+export const JOBS = { ingest: runIngest, draft: runDraft, reminder: runReminder, send: runSend, report: runReport } as const;

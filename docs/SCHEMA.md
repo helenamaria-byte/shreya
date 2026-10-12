@@ -1,16 +1,16 @@
 # Database schema (Neon Postgres)
 
-Source: [`db/migrations/001_init.sql`](../db/migrations/001_init.sql). Applied with `npm run db:migrate` (tracked in `schema_migrations`). Extension: `pg_trgm`.
+Source: [`db/migrations/001_init.sql`](../db/migrations/001_init.sql) and [`002_story_approval_soft_bounces_report.sql`](../db/migrations/002_story_approval_soft_bounces_report.sql). Applied with `npm run db:migrate` (tracked in `schema_migrations`). Extension: `pg_trgm`.
 
 | Table | Purpose | Key columns / constraints |
 |---|---|---|
 | `sources` | RSS feeds and GNews queries, plus their health | `name` UNIQUE, `type` ∈ rss/gnews, `active`, `last_fetched_at`, `last_status` (ok/failed), `last_error`, `last_count` |
 | `articles` | Every collected article | `url_hash` **UNIQUE** (sha256 of raw link), `canonical_hash` (normalised link), `duplicate_of` → articles, `duplicate_reason` ∈ same_url / similar_title / covered_in_past_issue, `duplicate_score`, `topic`, `topic_confidence`, `topic_method` (gemini/keyword), `issue_week` (ISO week in IST), `is_sample`. GIN trigram index on `title` |
-| `issues` | One per week | `week_key` **UNIQUE**, `issue_number` UNIQUE, `status` ∈ collecting / drafting / insufficient_stories / pending_approval / approved / rejected / sending / sent / skipped, `draft_sent_to_telegram_at`, `reminder_sent_at`, `approved_at`, `approved_via` ∈ telegram/dashboard, `sent_at`, `is_sample` |
-| `issue_stories` | Draft stories and reserves | **UNIQUE(issue_id, article_id)**, `state` ∈ selected / reserve / rejected / swapped_out, `position`, `reserve_rank`, `commentary`, `original_commentary`, `edited_at`, `gemini_rationale`, `connects_with`, `needs_review`, `review_notes` |
+| `issues` | One per week | `week_key` **UNIQUE**, `issue_number` UNIQUE, `status` ∈ collecting / drafting / insufficient_stories / pending_approval / approved / rejected / sending / sent / skipped, `draft_sent_to_telegram_at`, `reminder_sent_at`, `approved_at`, `approved_via` ∈ telegram/dashboard, `sent_at`, `report_sent_at` (delivery report, once), `is_sample` |
+| `issue_stories` | Draft stories and reserves | **UNIQUE(issue_id, article_id)**, `state` ∈ selected / reserve / rejected / swapped_out, `position`, `reserve_rank`, `commentary`, `original_commentary`, `edited_at`, `approved_at` (per-story approval), `gemini_rationale`, `connects_with`, `needs_review`, `review_notes` |
 | `issue_events` | Approval timeline (draft sent, edits, reminder, approval, revocation, send) | `issue_id`, `event`, `channel`, `detail`, `created_at` |
-| `voice_guide` | Versioned editorial voice | `version` UNIQUE, `content` (markdown), `is_assumption`. The latest version goes into every Gemini prompt |
-| `subscribers` | Mailing list | `email` UNIQUE, `status` ∈ active / unsubscribed / bounced / complained, `is_test_recipient`, `is_sample`, `unsubscribed_at`, `status_reason` |
+| `voice_guide` | Versioned editorial voice | `version` UNIQUE, `content` (markdown), `is_assumption`, `source` (assumed / edited / learned). The latest version goes into every Gemini prompt |
+| `subscribers` | Mailing list | `email` UNIQUE, `status` ∈ active / unsubscribed / bounced / complained, `is_test_recipient`, `is_sample`, `unsubscribed_at`, `status_reason`, `soft_bounces` (3 in a row → bounced) |
 | `subscriber_events` | Subscriber status history | `subscriber_id`, `status`, `reason` |
 | `deliveries` | One row per issue × subscriber | **UNIQUE(issue_id, subscriber_id)**, `resend_email_id`, `status` ∈ queued / sent / delivered / bounced / complained / failed / dry_run, `mode`, `last_event_at` |
 | `telegram_pending_actions` | Open "✏️ Edit" prompts | `chat_id`, `action` = edit_commentary, `issue_story_id`, `expires_at` (30 min) |

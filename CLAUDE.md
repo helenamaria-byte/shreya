@@ -12,7 +12,8 @@ Telegram Bot API (raw `fetch`, webhook mode) · Vitest + Playwright.
 - `npm run db:migrate` — applies `db/migrations/*.sql` once each
 - `npm run db:seed` — voice guide, 4 sample past issues, sample subscribers (idempotent)
 - `npm test` — Vitest against `TEST_DATABASE_URL` (a separate Neon branch; Telegram/Resend HTTP intercepted)
-- `npx tsx scripts/run-job.ts <ingest|draft|reminder|send|dry_run> [--at=YYYY-MM-DDTHH:mm] [--force]` — run a job locally (IST)
+- `npx tsx scripts/run-job.ts <ingest|draft|reminder|send|report|dry_run> [--at=YYYY-MM-DDTHH:mm] [--force]` — run a job locally (IST)
+- `npx tsx scripts/telegram-setup.ts [--webhook]` · `scripts/telegram-live-test.ts` · `scripts/live-email-test.ts` · `scripts/generate-topic-art.ts`
 - `npm run e2e` — checks the production URL · `npm run screenshots` — Playwright screenshots into docs/screenshots
 - `npx tsx scripts/render-diagrams.ts` — Mermaid → SVG (docs/ and public/diagrams/)
 

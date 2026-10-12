@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+const SOFT_BOUNCE_LIMIT = 3;
 const RANK: Record<string, number> = { queued: 0, failed: 0, sent: 1, delivered: 2, bounced: 3, complained: 4 };
 
 /**
@@ -42,14 +43,26 @@ export async function POST(req: Request) {
 
   const bounceType: string | undefined = event.data?.bounce?.type;
   const hardBounce = status === "bounced" && (!bounceType || /permanent|hard/i.test(bounceType));
+  const subId: number | undefined = delivery?.subscriber_id
+    ?? (to ? (await sql`SELECT id FROM subscribers WHERE lower(email) = lower(${to})`)[0]?.id : undefined);
+
+  // Graceful handling: a temporary (soft) bounce is only counted; three in a row suppress the address.
+  if (status === "bounced" && !hardBounce && subId) {
+    const r = (await sql`UPDATE subscribers SET soft_bounces = soft_bounces + 1 WHERE id = ${subId} RETURNING soft_bounces, status`)[0];
+    if (r && r.soft_bounces >= SOFT_BOUNCE_LIMIT && r.status === "active") {
+      const reason = `${r.soft_bounces} temporary bounces in a row (Resend webhook${bounceType ? `: ${bounceType}` : ""})`;
+      await sql`UPDATE subscribers SET status = 'bounced', status_reason = ${reason} WHERE id = ${subId}`;
+      await sql`INSERT INTO subscriber_events (subscriber_id, status, reason) VALUES (${subId}, 'bounced', ${reason})`;
+    }
+    return NextResponse.json({ ok: true, type, matched: !!delivery, softBounces: r?.soft_bounces });
+  }
+  if (status === "delivered" && subId) await sql`UPDATE subscribers SET soft_bounces = 0 WHERE id = ${subId} AND soft_bounces > 0`;
   if (hardBounce || status === "complained") {
     const newStatus = status === "complained" ? "complained" : "bounced";
     const reason = status === "complained"
       ? "Marked the email as spam (Resend complaint webhook)"
       : `Hard bounce (Resend webhook${bounceType ? `: ${bounceType}` : ""}${event.data?.bounce?.message ? ` — ${String(event.data.bounce.message).slice(0, 120)}` : ""})`;
-    const sub = delivery
-      ? (await sql`SELECT id FROM subscribers WHERE id = ${delivery.subscriber_id}`)[0]
-      : to ? (await sql`SELECT id FROM subscribers WHERE lower(email) = lower(${to})`)[0] : undefined;
+    const sub = subId ? { id: subId } : undefined;
     if (sub) {
       const changed = await sql`UPDATE subscribers SET status = ${newStatus}, status_reason = ${reason}
                                 WHERE id = ${sub.id} AND status NOT IN ('complained', ${newStatus}) RETURNING id`;

@@ -9,24 +9,26 @@ import { day, deliveriesCount, FRI_1000, WEEK, issueStatus, makeDraft, MON_0900,
 
 describe("Asia/Kolkata schedule (F1)", () => {
   it("maps the Vercel cron UTC times to the intended IST times", () => {
-    // 30 1 * * 1-3 → 07:00 IST; 30 9 * * 3 → 15:00 IST; 0 17 * * 3 → 22:30 IST; 30 2 * * 4 → 08:00 IST
+    // 30 1 * * 1-3 → 07:00 IST; 30 9 * * 3 → 15:00 IST; 30 16 * * 3 → 22:00 IST; 30 2 * * 4 → 08:00 IST; 30 12 * * 4 → 18:00 IST
     const at = (iso: string) => istParts(new Date(iso));
     expect(at("2026-10-12T01:30:00Z")).toMatchObject({ weekday: 1, hour: 7, minute: 0 });
     expect(at("2026-10-14T09:30:00Z")).toMatchObject({ weekday: 3, hour: 15, minute: 0 });
-    expect(at("2026-10-14T17:00:00Z")).toMatchObject({ weekday: 3, hour: 22, minute: 30 });
+    expect(at("2026-10-14T16:30:00Z")).toMatchObject({ weekday: 3, hour: 22, minute: 0 });
+    expect(at("2026-10-15T12:30:00Z")).toMatchObject({ weekday: 4, hour: 18, minute: 0 });
     expect(at("2026-10-15T02:30:00Z")).toMatchObject({ weekday: 4, hour: 8, minute: 0 });
     expect(weekKey(new Date("2026-10-12T01:30:00Z"))).toBe("2026-W42");
   });
 
   it("decides act/skip for each job at the simulated times", () => {
     const table: [Date, Record<Job, boolean>][] = [
-      [MON_0900, { ingest: true, draft: false, reminder: false, send: false }],
-      [WED_1500, { ingest: true, draft: true, reminder: false, send: false }],
-      [WED_2159, { ingest: true, draft: true, reminder: false, send: false }],
-      [WED_2201, { ingest: true, draft: true, reminder: true, send: false }],
-      [THU_0800, { ingest: false, draft: false, reminder: false, send: true }],
-      [istDate(day(4), 7, 59), { ingest: false, draft: false, reminder: true, send: false }],
-      [FRI_1000, { ingest: false, draft: false, reminder: false, send: false }],
+      [MON_0900, { ingest: true, draft: false, reminder: false, send: false, report: false }],
+      [WED_1500, { ingest: true, draft: true, reminder: false, send: false, report: false }],
+      [WED_2159, { ingest: true, draft: true, reminder: false, send: false, report: false }],
+      [WED_2201, { ingest: true, draft: true, reminder: true, send: false, report: false }],
+      [THU_0800, { ingest: false, draft: false, reminder: false, send: true, report: false }],
+      [istDate(day(4), 7, 59), { ingest: false, draft: false, reminder: true, send: false, report: false }],
+      [istDate(day(4), 18, 0), { ingest: false, draft: false, reminder: false, send: true, report: true }],
+      [FRI_1000, { ingest: false, draft: false, reminder: false, send: false, report: true }],
     ];
     for (const [at, expected] of table) {
       for (const job of Object.keys(expected) as Job[]) expect([job, at.toISOString(), scheduleGate(job, at).act]).toEqual([job, at.toISOString(), expected[job]]);
