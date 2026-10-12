@@ -29,9 +29,9 @@ Evidence lives in [`docs/evidence/`](docs/evidence/): `test-results.txt` (full V
 
 | ID | Requirement | Pass criteria | Status | Implementation | Evidence |
 |---|---|---|---|---|---|
-| A1 | Public Vercel URL | Production URL loads without login for read-only pages | ✅ | https://the-dispatch-murex.vercel.app (Vercel project `the-dispatch`, region `sin1`) | `e2e.txt`: all 7 pages, unsubscribe page, diagrams and images → 200; admin writes → 401 without login |
+| A1 | Public Vercel URL | Production URL loads without login for read-only pages | ✅ | https://the-dispatch-murex.vercel.app (Vercel project `the-dispatch`, region `sin1`) | `e2e.txt`: all 5 pages, unsubscribe page and images → 200; admin writes → 401 without login |
 | A2 | GitHub repository | Public repo with code, README, docs; no secrets in history | ✅ | https://github.com/helenamaria-byte/shreya | `gitleaks.txt` (full history: no leaks; none of the 12 credential values in any commit) |
-| A3 | Components Map | Mermaid source + rendered diagram showing every tool, its role, and data flow | ✅ | `docs/components-map.mmd` → `.svg`; in README and on the dashboard's "How it works" page | `screenshots/07-how-it-works.png` |
+| A3 | Components Map | Mermaid source + rendered diagram showing every tool, its role, and data flow | ✅ | `docs/components-map.mmd` → `docs/components-map.svg`, embedded in the README | rendered by `scripts/render-diagrams.ts` |
 | A4 | Live external data | Real articles from live feeds present at submission time | ✅ | `lib/ingest.ts`, `lib/sources.ts` | `cron-triggers.txt` (production cron run: 45 new articles, 24/25 sources); 432 articles for 2026-W42 on the front page |
 | A5 | Gemini Flash only | All in-app AI uses a Gemini Flash model; no Claude/other API in app code | ✅ | `lib/gemini.ts` (refuses non-Flash model names), `gemini-3.8-flash`; topic art made once with `gemini-3.1-flash-image` | `gemini-only-grep.txt` |
 
@@ -98,10 +98,10 @@ The original "collapsible sections" criterion was the author's own suggestion, n
 
 | ID | Requirement | Pts | Pass criteria | Status | Implementation | Evidence |
 |---|---|---|---|---|---|---|
-| H1 | Every part of the pipeline visible | 2 | Front page, draft, articles, voice, subscribers, logs, how it works — all working | ✅ | `app/page.tsx`, `lib/dashboard.ts` | `screenshots/01`–`07`; `e2e.txt` (every page 200, all tabs present) |
+| H1 | Every part of the pipeline visible | 2 | Front page, draft, articles, voice, subscribers — all working (run logs kept in Neon `workflow_runs`; diagrams in the README) | ✅ | `app/page.tsx`, `lib/dashboard.ts` | `screenshots/01`–`05`; `e2e.txt` (every page 200, all tabs present) |
 | H2 | Big picture first | 1 | Front page shows the workflow, status headline, what to do next, key numbers and this week's edition at a glance | ✅ | one headline + next action, 5-step status line, 4 numbers, rubber stamp, topic collage with one button | `screenshots/01-front-page.png` |
 | H3 | Details on click / page turning | 1 | "View this week's draft" moves the collage aside and folds to the draft; top navigation, ← → and swipe turn pages; rows expand to detail | ✅ | `app/paper.tsx` (fold animation, keyboard, swipe, reduced-motion fallback) | `screenshots/01b-pictures-move-aside.png`, `01c-paper-folding.png`, `02-draft.png` |
-| H4 | Clean newspaper design, works on mobile | 1 | Two newsprint fonts, top navigation, creases only at the edges, plain-word statuses with dots, one main button per page, admin actions in one menu, no horizontal scroll on a phone | ✅ | `app/globals.css`, `app/layout.tsx` (Playfair Display, Libre Caslon; IBM Plex Mono only for code/JSON) | `screenshots/11-phone-front-page.png`, `12-phone-draft.png` (overflow 0 px on all 7 pages) |
+| H4 | Clean newspaper design, works on mobile | 1 | Two newsprint fonts, top navigation, creases only at the edges, plain-word statuses with dots, one main button per page, admin actions in one menu, no horizontal scroll on a phone | ✅ | `app/globals.css`, `app/layout.tsx` (Playfair Display, Libre Caslon; IBM Plex Mono only for code/JSON) | `screenshots/11-phone-front-page.png`, `12-phone-draft.png` (overflow 0 px on every page) |
 | H5 | README + setup + `.env.example` | 2 | Fresh setup possible from README alone | ✅ | README (brief trace, 10 setup steps, 5-minute demo, limitations, going live), `.env.example` | — |
 | H6 | Workflow flowchart | 1 | Mermaid source + render with the decision points | ✅ | `docs/workflow-flowchart.mmd` → `.svg` | diamonds: in last four issues? · duplicate this week? · enough stories? · final draft confirmed? · still pending at Wed 10 PM? · approval before the Thursday send? · duplicate-send guard |
 | H7 | Screenshots / demo | 1 | Front page, each page, transition frames, phone view | ✅ | `scripts/screenshots.ts` against production | `docs/screenshots/01`–`13` |

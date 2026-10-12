@@ -107,7 +107,7 @@ function reply(req: Request, json: boolean, ok: boolean, message: string, anchor
   url.searchParams.set("msg", message.slice(0, 400));
   if (!ok) url.searchParams.set("err", "1");
   if (run) url.searchParams.set("run", String(run.runId));
-  const page = ({ draft: "draft", approval: "draft", voice: "voice", subscribers: "subscribers", logs: "logs" } as Record<string, string>)[anchor];
+  const page = ({ draft: "draft", approval: "draft", voice: "voice", subscribers: "subscribers" } as Record<string, string>)[anchor];
   if (page) url.searchParams.set("p", page);
   return NextResponse.redirect(url, 303);
 }

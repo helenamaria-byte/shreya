@@ -39,15 +39,14 @@ async function main() {
     return `db ok, ${Object.keys(j.env).length} env vars present, model ${j.geminiModel}, email mode ${j.emailMode}`;
   });
 
-  for (const path of ["/", "/?p=draft", "/?p=articles", "/?p=voice", "/?p=subscribers", "/?p=logs", "/?p=how", "/unsubscribe",
-    "/diagrams/components-map.svg", "/diagrams/workflow-flowchart.svg", "/topics/fintech.jpg"]) {
+  for (const path of ["/", "/?p=draft", "/?p=articles", "/?p=voice", "/?p=subscribers", "/unsubscribe", "/topics/fintech.jpg"]) {
     await check(`GET ${path} → 200`, async () => expectStatus(await fetch(`${BASE}${path}`), 200));
   }
 
   await check("front page: top navigation, workflow status, unsubscribes card, draft link, sample-data note", async () => {
     const html = (await (await fetch(`${BASE}/`)).text()).replace(/&#x27;/g, "'").replace(/&amp;/g, "&");
-    for (const s of ["Assignment prototype · sample data is labelled", "News collection", "Editorial review", "Unsubscribes & bounces", "View this week's draft",
-      "Draft", "Articles", "Voice", "Subscribers", "Logs", "How it works", "Track delivery"]) {
+    for (const s of ["Shreya's newsletter on India's startup ecosystem", "Assignment prototype · sample data is labelled", "News collection", "Editorial review", "Unsubscribes & bounces", "View this week's draft",
+      "Draft", "Articles", "Voice", "Subscribers", "Track delivery"]) {
       if (!html.includes(s)) throw new Error(`missing “${s}”`);
     }
   });

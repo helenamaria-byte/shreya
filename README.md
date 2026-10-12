@@ -32,7 +32,7 @@ A weekly newsletter about the Indian startup and tech ecosystem, run almost hand
 
 | Piece | Role |
 |---|---|
-| **Vercel** (Next.js 16, region `sin1`) | Newspaper-style dashboard, API routes, cron targets |
+| **Vercel** (Next.js 16, region `sin1`) | Newspaper-style dashboard (5 pages), API routes, cron targets |
 | **Vercel Cron** | Mon–Wed ingest · Wed draft · Wed 10 PM reminder · Thu send · Thu 6 PM delivery report (UTC expressions mapped to IST; each job re-checks the IST time and the issue's state) |
 | **RSS + Google News RSS + GNews API** | Live Indian startup/tech news |
 | **Neon Postgres** (Singapore) | Articles, dedup, past-4-issues check, drafts, per-story approval, subscribers, deliveries, run logs |
@@ -73,10 +73,10 @@ Details: [docs/SCHEMA.md](docs/SCHEMA.md).
 
 ## The dashboard: a newspaper you can page through
 
-- **Top navigation:** Overview · Draft · Articles · Voice · Subscribers · Logs · How it works, right under the masthead.
+- **Masthead:** a strip reading "Shreya's newsletter on India's startup ecosystem" above **The Dispatch**, then the top navigation: Overview · Draft · Articles · Voice · Subscribers.
 - **Front page, kept deliberately simple:** one status headline with the next action, a five-step status line (Collect → Select → Review → Send → Track delivery), four numbers (articles, stories approved, unsubscribes & bounces, review time vs ~4 h by hand), a rubber stamp when approved or sent, and a collage with one picture per story (8–10) around one button: **View this week's draft**.
 - **Turning pages:** the paper **folds** to the next page. From the front page the collage pictures move aside first. Arrow keys and swipes work too, and reduced-motion users get no animation.
-- **Inside pages:** the draft (illustrated story cards with keep/edit/swap/reject, Gemini's reasons, approval history, topic mix vs the last four issues, and the email as subscribers will see it), articles (why each was kept or dropped, source health), editorial voice (Learn my voice, edit, version history), subscribers (unsubscribes, bounces, delivery tracking, CSV import), logs, and how it works.
+- **Inside pages:** the draft (illustrated story cards with keep/edit/swap/reject, Gemini's reasons, and — folded away — approval history, topic mix vs the last four issues, reserves and the email preview), articles (why each was kept or dropped, source health), editorial voice (Learn my voice, edit, version history), and subscribers (unsubscribes, bounces, delivery tracking, CSV import). Every job run is still logged in Neon (`workflow_runs`); the components map and flowchart live in this README.
 - **Two fonts (Playfair Display headlines, Libre Caslon text), paper creased only at the edges.** Topic illustrations are newsprint etchings generated once with Gemini Flash image (`scripts/generate-topic-art.ts`).
 
 ## Setup (≤10 steps)

@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 type SP = { p?: string; msg?: string; err?: string; atopic?: string; astatus?: string; login?: string; run?: string };
 type D = Awaited<ReturnType<typeof loadDashboard>>;
 
-const PAGES = ["overview", "draft", "articles", "voice", "subscribers", "logs", "how"] as const;
+const PAGES = ["overview", "draft", "articles", "voice", "subscribers"] as const;
 
 export default async function Dashboard({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
@@ -27,12 +27,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     { id: "articles", label: "Articles" },
     { id: "voice", label: "Voice" },
     { id: "subscribers", label: "Subscribers" },
-    { id: "logs", label: "Logs" },
-    { id: "how", label: "How it works" },
   ];
   const notice = (
     <>
-      {sp.msg && <div className={`flash${sp.err ? " err" : ""}`}>{sp.msg}{sp.run && <> · <a href={`/?p=logs#run-${sp.run}`}>see the run log</a></>}</div>}
+      {sp.msg && <div className={`flash${sp.err ? " err" : ""}`}>{sp.msg}</div>}
       {sp.login === "failed" && <div className="flash err">Wrong admin password.</div>}
       {sp.login === "required" && <div className="flash err">Log in from “Run manually” to make changes.</div>}
     </>
@@ -49,8 +47,6 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             {page === "articles" && <ArticlesPage d={d} sp={sp} />}
             {page === "voice" && <VoicePage d={d} admin={admin} />}
             {page === "subscribers" && <SubscribersPage d={d} admin={admin} />}
-            {page === "logs" && <LogsPage d={d} sp={sp} />}
-            {page === "how" && <HowPage />}
           </Paper>
         </div>
       </article>
@@ -63,6 +59,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 function Masthead({ d, admin, login }: { d: D; admin: boolean; login?: string }) {
   return (
     <header className="masthead">
+      <span className="strap">Shreya's newsletter on India's startup ecosystem</span>
       <span className="dateline">{formatIst(d.at, { weekday: "long", day: "numeric", month: "long", hour: undefined, minute: undefined })}</span>
       <a className="title" href="/" data-page="overview">The Dispatch</a>
       <div className="right"><RunMenu admin={admin} login={login} /></div>
@@ -508,57 +505,6 @@ function SubscribersPage({ d, admin }: { d: D; admin: boolean }) {
 }
 
 // ---------------------------------------------------------------------------
-// Page 6 — logs, Page 7 — how it works
-// ---------------------------------------------------------------------------
-function LogsPage({ d, sp }: { d: D; sp: SP }) {
-  const last = d.runs[0];
-  return (
-    <>
-      <section className="page-head"><div>
-        <h1>Workflow logs</h1>
-        <p className="lede">{last ? `Last run: ${cap(last.job.replace(/_/g, " "))} ${last.status === "failed" ? "failed" : last.status === "skipped" ? "skipped" : "succeeded"} ${ago(last.started_at, d.at)}` : "No runs yet"} · {d.failuresThisWeek} failure{d.failuresThisWeek === 1 ? "" : "s"} this week. Every cron, manual and simulated run is recorded.</p>
-      </div></section>
-      <div className="rows">
-        <div className="head g-runs"><span>Job</span><span>Time</span><span>Trigger</span><span>Result</span></div>
-        {d.runs.map((r) => (
-          <details className="row" key={r.id} id={`run-${r.id}`} open={sp.run === String(r.id)}>
-            <summary className="g-runs">
-              <Status dot={r.status === "failed" ? "red" : r.status === "skipped" ? "grey" : r.status ? "green" : "blue"} text={cap(r.job.replace(/_/g, " "))} />
-              <span className="muted small">{formatIst(r.started_at)}</span>
-              <span className="muted small">{r.trigger}{r.simulated_now ? " · sim" : ""}</span>
-              <span className="small cell-title">{r.summary ?? "Running…"}</span>
-            </summary>
-            <div className="detail">
-              <dl className="kv">
-                <dt>Result</dt><dd>{r.status ?? "running"} — {r.summary}</dd>
-                <dt>Started → finished</dt><dd>{formatIst(r.started_at, { second: "2-digit" })} → {formatIst(r.finished_at, { second: "2-digit" })}</dd>
-                {r.simulated_now && <><dt>Simulated time</dt><dd>{formatIst(r.simulated_now)} IST</dd></>}
-              </dl>
-              {r.details && <pre className="json">{JSON.stringify(r.details, null, 2)}</pre>}
-            </div>
-          </details>
-        ))}
-      </div>
-    </>
-  );
-}
-
-function HowPage() {
-  return (
-    <>
-      <section className="page-head"><div>
-        <h1>How it works</h1>
-        <p className="lede">Vercel Cron (UTC) → IST: ingest <span className="mono">{SCHEDULE.ingest.cron}</span> = {SCHEDULE.ingest.when} · draft <span className="mono">{SCHEDULE.draft.cron}</span> = {SCHEDULE.draft.when} · reminder <span className="mono">{SCHEDULE.reminder.cron}</span> = {SCHEDULE.reminder.when} · send <span className="mono">{SCHEDULE.send.cron}</span> = {SCHEDULE.send.when} · report <span className="mono">{SCHEDULE.report.cron}</span> = {SCHEDULE.report.when}.</p>
-      </div></section>
-      <section className="columns">
-        <div><h3 style={{ marginBottom: 10 }}>Components map</h3><img className="diagram" src="/diagrams/components-map.svg" alt="Components map: GitHub, Vercel, Cron, RSS/GNews, Neon, Gemini Flash, Telegram, Resend, subscribers, dashboard" /></div>
-        <div><h3 style={{ marginBottom: 10 }}>Weekly flowchart</h3><img className="diagram" src="/diagrams/workflow-flowchart.svg" alt="Weekly workflow flowchart with decision points" /></div>
-      </section>
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
 function RunMenu({ admin, login }: { admin: boolean; login?: string }) {
   return (
     <details className="menu" open={login === "failed" || login === "required" ? true : undefined}>
@@ -633,14 +579,6 @@ function eventDot(e: string): Dot {
   if (["skipped", "rejected", "send_failed"].includes(e)) return "red";
   if (["approval_revoked", "reminder_sent", "insufficient_stories"].includes(e)) return "amber";
   return "blue";
-}
-
-function ago(t: string, at: Date) {
-  const m = Math.round((at.getTime() - new Date(t).getTime()) / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m} min ago`;
-  if (m < 48 * 60) return `${Math.round(m / 60)} h ago`;
-  return `${Math.round(m / 1440)} days ago`;
 }
 
 /** Tiny markdown renderer for the voice guide (headings, lists, quotes, bold/italic). */

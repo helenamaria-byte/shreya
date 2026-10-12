@@ -7,7 +7,7 @@ loadEnv();
 const BASE = (process.argv[2] || process.env.APP_BASE_URL || "http://localhost:3000").replace(/\/$/, "");
 const OUT = process.argv[3] || "docs/screenshots";
 const PAGES = [
-  ["02-draft", "draft"], ["03-articles", "articles"], ["04-voice", "voice"], ["05-subscribers", "subscribers"], ["06-logs", "logs"], ["07-how-it-works", "how"],
+  ["02-draft", "draft"], ["03-articles", "articles"], ["04-voice", "voice"], ["05-subscribers", "subscribers"],
 ] as const;
 
 async function main() {
