@@ -5,7 +5,7 @@ A weekly newsletter about the Indian startup and tech ecosystem, run almost hand
 > **Assignment prototype.** Sample data is labelled in the UI (`is_sample`), the editorial voice is an assumption ([docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md)), and email runs in **test mode**: only the owner's inbox and Resend's test addresses can receive it.
 
 - **Live dashboard:** https://the-dispatch-murex.vercel.app (read-only without the admin password)
-- **Repository:** https://github.com/helenamaria-byte/the-dispatch-newsletter-engine
+- **Repository:** https://github.com/helenamaria-byte/shreya
 - **Health:** https://the-dispatch-murex.vercel.app/api/health (env var *names* + DB check, never values)
 
 ## Architecture
@@ -52,7 +52,7 @@ Details: [docs/SCHEMA.md](docs/SCHEMA.md).
 
 ## Setup (≤10 steps)
 
-1. `git clone https://github.com/helenamaria-byte/the-dispatch-newsletter-engine && cd the-dispatch-newsletter-engine && npm i` (Node 20+).
+1. `git clone https://github.com/helenamaria-byte/shreya && cd shreya && npm i` (Node 20+).
 2. `cp .env.example .env.local` and fill in the keys (each line explains where to get it). Generate `CRON_SECRET`, `TELEGRAM_WEBHOOK_SECRET`, `UNSUBSCRIBE_SIGNING_SECRET` and `ADMIN_PASSWORD` with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`.
 3. Message your bot `/start`, then read your chat ID: `curl https://api.telegram.org/bot<TOKEN>/getUpdates` → `TELEGRAM_CHAT_ID`.
 4. `npm run db:migrate && npm run db:seed`.

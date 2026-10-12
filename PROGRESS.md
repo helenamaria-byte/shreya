@@ -9,15 +9,12 @@
 - [x] Section 8 — Email: gate, template, unsubscribe, Resend webhook (created via API), real test-mode send verified
 - [x] Section 10 — Dashboard (deployed)
 - [x] Section 11 — Unit/integration tests (Vitest on Neon test branch), e2e against production, live ingestion, live Gemini draft, live email
-- [~] Section 12 — Vercel deployed + env + crons + Resend + Telegram webhooks ✅; GitHub ❌ (token cannot create repos)
-- [x] Section 13 — README, SCHEMA, ASSUMPTIONS, diagrams, sample run, screenshots, RUBRIC (all rows filled; A2 pending GitHub)
+- [~] Section 12 — Vercel deployed + env + crons + Resend + Telegram webhooks ✅; GitHub ✅ pushed to https://github.com/helenamaria-byte/shreya (repo created by the user; token could not create repos)
+- [x] Section 13 — README, SCHEMA, ASSUMPTIONS, diagrams, sample run, screenshots, RUBRIC (all rows ✅)
 
 ## Production
 - URL: https://the-dispatch-murex.vercel.app (Vercel project `the-dispatch`)
 - Resend webhook id 39f6cb43-15e5-42f3-bda5-f93e09338af8 → /api/resend/webhook
 
-## Remaining once unblocked
-- GitHub: once the empty repo exists (or the token has Administration: write): `git remote add origin https://github.com/helenamaria-byte/the-dispatch-newsletter-engine.git && git push -u origin main` (gitleaks first), then set RUBRIC A2 to ✅.
-
-## Blocked — needs user
-- GitHub: the fine-grained token cannot create repositories (`Resource not accessible by personal access token` on POST /user/repos and GraphQL createRepository). Second token (All repositories) still lacks Administration: write. Simplest fix: create an empty public repo `the-dispatch-newsletter-engine` at github.com/new (no README/licence) — the current token can then push.
+## Remaining
+- Nothing blocked. Shreya can approve the pending issue #5 draft in Telegram; Thursday 08:00 IST cron sends it in test mode.
