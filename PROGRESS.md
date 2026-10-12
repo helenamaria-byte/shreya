@@ -10,7 +10,7 @@
 - [x] Section 10 — Dashboard (deployed)
 - [x] Section 11 — Unit/integration tests (Vitest on Neon test branch), e2e against production, live ingestion, live Gemini draft, live email
 - [~] Section 12 — Vercel deployed + env + crons + Resend + Telegram webhooks ✅; GitHub ❌ (token cannot create repos)
-- [x] Section 13 — README, SCHEMA, ASSUMPTIONS, diagrams, sample run, screenshots, RUBRIC (E rows pending live Telegram)
+- [x] Section 13 — README, SCHEMA, ASSUMPTIONS, diagrams, sample run, screenshots, RUBRIC (all rows filled; A2 pending GitHub)
 
 ## Production
 - URL: https://the-dispatch-murex.vercel.app (Vercel project `the-dispatch`)
