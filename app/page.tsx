@@ -1,6 +1,4 @@
 import Image from "next/image";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, validAdminSession } from "@/lib/auth";
 import { fmtMinutes, loadDashboard, MANUAL_MINUTES, maskEmail, type Dot } from "@/lib/dashboard";
 import { renderEmail } from "@/lib/email";
 import { formatIst, SCHEDULE } from "@/lib/time";
@@ -10,7 +8,7 @@ import { Paper, type Tab } from "./paper";
 
 export const dynamic = "force-dynamic";
 
-type SP = { p?: string; msg?: string; err?: string; atopic?: string; astatus?: string; login?: string; run?: string };
+type SP = { p?: string; msg?: string; err?: string; atopic?: string; astatus?: string; run?: string };
 type D = Awaited<ReturnType<typeof loadDashboard>>;
 
 const PAGES = ["overview", "draft", "articles", "voice", "subscribers"] as const;
@@ -18,7 +16,7 @@ const PAGES = ["overview", "draft", "articles", "voice", "subscribers"] as const
 export default async function Dashboard({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const page = (PAGES as readonly string[]).includes(sp.p ?? "") ? sp.p! : "overview";
-  const admin = validAdminSession((await cookies()).get(ADMIN_COOKIE)?.value);
+  const admin = true; // open dashboard: anyone on the site can make changes
   const d = await loadDashboard({ articleTopic: sp.atopic, articleStatus: sp.astatus });
 
   const tabs: Tab[] = [
@@ -31,8 +29,6 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const notice = (
     <>
       {sp.msg && <div className={`flash${sp.err ? " err" : ""}`}>{sp.msg}</div>}
-      {sp.login === "failed" && <div className="flash err">Wrong admin password.</div>}
-      {sp.login === "required" && <div className="flash err">Log in from “Run manually” to make changes.</div>}
     </>
   );
 
@@ -40,7 +36,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     <div className="stage">
       <article className="sheet">
         <div className="sheet-inner">
-          <Masthead d={d} admin={admin} login={sp.login} />
+          <Masthead d={d} />
           <Paper page={page} tabs={tabs} notice={notice}>
             {page === "overview" && <Overview d={d} />}
             {page === "draft" && <DraftPage d={d} admin={admin} />}
@@ -56,13 +52,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 }
 
 // ---------------------------------------------------------------------------
-function Masthead({ d, admin, login }: { d: D; admin: boolean; login?: string }) {
+function Masthead({ d }: { d: D }) {
   return (
     <header className="masthead">
       <span className="strap">Shreya's article on</span>
       <span className="dateline">{formatIst(d.at, { weekday: "long", day: "numeric", month: "long", hour: undefined, minute: undefined })}</span>
       <a className="title" href="/" data-page="overview">The Dispatch</a>
-      <div className="right"><RunMenu admin={admin} login={login} /></div>
+      <div className="right" />
     </header>
   );
 }
@@ -351,7 +347,7 @@ function ArticlesPage({ d, sp, admin }: { d: D; sp: SP; admin: boolean }) {
                     <button className="btn" type="submit">📨 Send to Telegram</button>
                     <span className="small muted">Shreya gets it with a ➕ Add to draft button.</span>
                   </form>
-                ) : <p className="small muted">Log in via “Run manually” to send this article to Telegram.</p>}
+                ) : null}
               </div>
             </details>
           );
@@ -422,7 +418,7 @@ function VoicePage({ d, admin }: { d: D; admin: boolean }) {
               </form>
             </div>
           </>
-        ) : <p className="small muted">Log in via “Run manually” to edit the guide or learn it from Shreya's writing.</p>}
+        ) : null}
       </section>
       <details className="nested">
         <summary>Version history ({d.voices.length})</summary>
@@ -470,7 +466,7 @@ function SubscribersPage({ d, admin }: { d: D; admin: boolean }) {
         <div className="box">
           <h3>Recent unsubscribes & bounces</h3>
           {d.suppressionEvents.length ? d.suppressionEvents.slice(0, 8).map((e, i) => (
-            <p key={i} className="small"><Status dot="red" text={cap(e.status)} /> {admin ? e.email : maskEmail(e.email)} <span className="muted">· {formatIst(e.created_at)} · {e.reason}</span> {e.is_sample && <span className="tag sample">sample</span>}</p>
+            <p key={i} className="small"><Status dot="red" text={cap(e.status)} /> {maskEmail(e.email)} <span className="muted">· {formatIst(e.created_at)} · {e.reason}</span> {e.is_sample && <span className="tag sample">sample</span>}</p>
           )) : <p className="small muted">None yet.</p>}
         </div>
       </section>
@@ -489,7 +485,7 @@ function SubscribersPage({ d, admin }: { d: D; admin: boolean }) {
         {d.subscribers.map((s) => (
           <details className="row" key={s.id}>
             <summary className="g-subs">
-              <span className="cell-title">{admin ? s.email : maskEmail(s.email)}</span>
+              <span className="cell-title">{maskEmail(s.email)}</span>
               <Status dot={s.status === "active" ? (s.soft_bounces ? "amber" : "green") : s.status === "unsubscribed" ? "grey" : "red"} text={cap(s.status) + (s.soft_bounces && s.status === "active" ? ` · ${s.soft_bounces} soft` : "")} />
               <span>{s.is_test_recipient && <span className="tag test">test</span>} {s.is_sample && <span className="tag sample">sample</span>}</span>
             </summary>
@@ -508,44 +504,6 @@ function SubscribersPage({ d, admin }: { d: D; admin: boolean }) {
         ))}
       </div>
     </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-function RunMenu({ admin, login }: { admin: boolean; login?: string }) {
-  return (
-    <details className="menu" open={login === "failed" || login === "required" ? true : undefined}>
-      <summary>Run manually ▾</summary>
-      <div className="menu-panel">
-        {!admin ? (
-          <form method="post" action="/api/admin/login">
-            <label>Admin password<input type="password" name="password" autoComplete="current-password" required /></label>
-            <button className="btn" type="submit">Log in</button>
-            <p className="small muted">Everything here is read-only without the password.</p>
-          </form>
-        ) : (
-          <>
-            <form method="post" action="/api/admin/action">
-              <label>Simulate time (IST, optional)<input type="datetime-local" name="simulated_now" /></label>
-              <p className="small muted">With a simulated time each job checks the IST schedule as if it were that moment. Simulated runs can never send live email.</p>
-              <hr />
-              <div className="group">
-                <button className="btn" name="action" value="run_ingest">Run ingestion now</button>
-                <label className="check small"><input type="checkbox" name="broken_feed" /> include a deliberately broken test feed</label>
-                <button className="btn" name="action" value="run_draft">Run selection + send draft to Telegram</button>
-                <label className="check small"><input type="checkbox" name="force" /> regenerate even if a draft exists</label>
-                <button className="btn" name="action" value="run_reminder">Run reminder check (Wed 10 PM)</button>
-                <button className="btn" name="action" value="run_send">Run send check (Thu 8 AM)</button>
-                <button className="btn" name="action" value="run_report">Run delivery report (Thu 6 PM)</button>
-                <button className="btn" name="action" value="dry_run_email">Send dry-run email</button>
-              </div>
-            </form>
-            <hr />
-            <form method="post" action="/api/admin/logout"><button className="btn link" type="submit">Log out</button></form>
-          </>
-        )}
-      </div>
-    </details>
   );
 }
 

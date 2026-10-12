@@ -48,20 +48,10 @@ async function main() {
   const preview = desk.locator("details.nested > summary", { hasText: "printed edition" });
   if (await preview.count()) { await preview.click(); await desk.waitForTimeout(600); await desk.locator("iframe.preview").screenshot({ path: `${OUT}/08-email-preview.png` }); console.log("08-email-preview.png"); }
 
-  await desk.goto(`${BASE}/`, { waitUntil: "networkidle" });
-  await desk.locator("details.menu > summary").click();
-  await desk.screenshot({ path: `${OUT}/09-run-manually-login.png` });
-  if (process.env.ADMIN_PASSWORD) {
-    await desk.fill('details.menu input[name="password"]', process.env.ADMIN_PASSWORD);
-    await desk.click('details.menu button[type="submit"]');
-    await desk.waitForLoadState("networkidle");
-    await desk.locator("details.menu > summary").click();
-    await desk.screenshot({ path: `${OUT}/10-run-manually-admin.png` });
-    await desk.goto(`${BASE}/?p=draft`, { waitUntil: "networkidle" });
-    await desk.waitForTimeout(900);
-    await desk.locator(".story").nth(1).screenshot({ path: `${OUT}/10b-admin-story-actions.png` });
-    console.log("09/10 admin menu, 10b story actions");
-  }
+  await desk.goto(`${BASE}/?p=draft`, { waitUntil: "networkidle" });
+  await desk.waitForTimeout(900);
+  await desk.locator(".story").nth(1).screenshot({ path: `${OUT}/10-story-actions.png` });
+  console.log("10 story actions (open to everyone)");
 
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await phone.goto(`${BASE}/`, { waitUntil: "networkidle" });

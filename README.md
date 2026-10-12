@@ -4,7 +4,7 @@ A weekly newsletter about the Indian startup and tech ecosystem, run almost hand
 
 > **Assignment prototype.** Sample data is labelled in the UI (`is_sample`), and the starting voice guide is an assumption that can be replaced with one learned from her writing ([docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md)). Email runs in **test mode**: only the owner's inbox and Resend's test addresses can receive it.
 
-- **Live dashboard:** https://the-dispatch-murex.vercel.app (read-only without the admin password)
+- **Live dashboard:** https://the-dispatch-murex.vercel.app (open: anyone on the site can review and change the draft — the owner's choice)
 - **Repository:** https://github.com/helenamaria-byte/shreya
 - **Health:** https://the-dispatch-murex.vercel.app/api/health (env var *names* + DB check, never values)
 
@@ -25,7 +25,7 @@ A weekly newsletter about the Indian startup and tech ecosystem, run almost hand
 | Never sends autonomously; waits for explicit confirmation | one send function starting with an atomic `UPDATE … WHERE status='approved'` claim. Any edit after approval revokes it |
 | Reminder if no confirmation by Wednesday 10 PM | cron `30 16 * * 3` → fires 22:00–22:59 IST, once, only while still pending |
 | Unsubscribes and bounces from Gmail handled gracefully | Gmail one-click `List-Unsubscribe` + signed footer link. Hard bounces and spam complaints suppressed via signed Resend webhooks. Soft bounces are counted and only suppress after 3 in a row. Thursday-evening delivery report to Telegram. Front-page card for unsubscribes & bounces |
-| 2,200 subscribers | CSV import (admin) that never re-activates a suppressed address |
+| 2,200 subscribers | CSV import (Subscribers page) that never re-activates a suppressed address |
 | Her editorial judgment stays hers | Articles page → **📨 Send to Telegram** on any article → **➕ Add to draft** there: Gemini writes its commentary and it joins the draft (max 10, unapproved) |
 | "It takes her four hours every week" | front-page card: time from draft to her confirmation vs ~4 h by hand |
 
@@ -67,7 +67,7 @@ Mermaid sources: [docs/components-map.mmd](docs/components-map.mmd), [docs/workf
 4. **Test mode only reaches test recipients.** Live needs `EMAIL_MODE=live` **and** `LIVE_SEND_CONFIRMED=true`, and simulated time can never send live.
 5. **Any edit after approval revokes it.**
 6. **Only Shreya's chat, with the webhook secret, can change or approve a draft.**
-7. **Cron needs `CRON_SECRET`; dashboard writes need the admin password.**
+7. **Cron needs `CRON_SECRET`; Telegram needs its webhook secret and Shreya's chat ID.** The dashboard itself is deliberately open (owner's choice): anyone on the site can edit or confirm the draft, but every dashboard action runs on the real clock — simulated time is only available to `scripts/run-job.ts` and the tests.
 8. **Secrets** stay out of the repo, logs and UI; gitleaks runs before each push.
 
 Details: [docs/SCHEMA.md](docs/SCHEMA.md).
@@ -95,15 +95,15 @@ Details: [docs/SCHEMA.md](docs/SCHEMA.md).
 
 ## Demo the whole week in five minutes (simulated time)
 
-Open the dashboard → **Run manually ▾** → admin password. A **Simulate time (IST)** value makes a job behave as if it were that moment. It is logged, and it can never trigger a live send.
+The dashboard is open, so anyone can use the buttons on the Draft, Articles, Voice and Subscribers pages. To replay the week's schedule without waiting, run the jobs with a simulated IST time (logged in `workflow_runs`; a simulated run can never send live email):
 
-1. **Collect:** *Run ingestion now* (tick the broken test feed to see graceful failure). Look at **Articles**.
-2. **Select:** simulate *Wednesday 15:00* → *Run selection + send draft to Telegram* (tick *regenerate* if needed). Open **View this week's draft**.
-3. **Review:** in Telegram, tap ✅ Keep / ✏️ Edit / 🔄 Swap / ❌ Reject per story, then ✅ Confirm final draft → *Yes*. A later edit drops it back to pending, and the stamp disappears.
-4. **Reminder:** without confirming, simulate *Wednesday 21:59* → *Run reminder check* (skips), then *22:01* (sends one; a second run skips).
-5. **Send:** simulate *Thursday 08:00* → *Run send check*. If confirmed, test-mode email goes out and the stamp reads SENT. If not, nothing is sent and the issue shows NOT SENT.
-6. **Track delivery:** simulate *Thursday 18:05* → *Run delivery report*. The Telegram report arrives, and **Subscribers** shows bounces and unsubscribes.
-7. **Voice:** **Editorial voice → Learn my voice**: paste past issues to save a learned version; the next draft uses it.
+1. **Collect:** `npx tsx scripts/run-job.ts ingest --broken-feed` — then look at **Articles** (the broken test feed shows as failed, the run still succeeds).
+2. **Select:** `npx tsx scripts/run-job.ts draft --at=<Wednesday>T15:00 --force` — the draft arrives in Telegram and on **Draft**.
+3. **Review:** in Telegram (or on the Draft page), ✅ Keep / ✏️ Edit / 🔄 Swap / ❌ Reject each story, then ✅ Confirm final draft. A later edit drops it back to pending and the stamp disappears.
+4. **Reminder:** `… reminder --at=<Wednesday>T21:59` skips; `… reminder --at=<Wednesday>T22:01` sends one reminder; a second run skips.
+5. **Send:** `… send --at=<Thursday>T08:00` — confirmed → test-mode email goes out and the stamp reads SENT; not confirmed → nothing sent, NOT SENT.
+6. **Track delivery:** `… report --at=<Thursday>T18:05` — the Telegram report arrives; **Subscribers** shows bounces and unsubscribes.
+7. **Pick a story yourself:** **Articles** → open any article → **📨 Send to Telegram** → ➕ Add to draft.
 
 ## Repository map
 

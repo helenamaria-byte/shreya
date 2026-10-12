@@ -29,7 +29,7 @@ Evidence lives in [`docs/evidence/`](docs/evidence/): `test-results.txt` (full V
 
 | ID | Requirement | Pass criteria | Status | Implementation | Evidence |
 |---|---|---|---|---|---|
-| A1 | Public Vercel URL | Production URL loads without login for read-only pages | ✅ | https://the-dispatch-murex.vercel.app (Vercel project `the-dispatch`, region `sin1`) | `e2e.txt`: all 5 pages, unsubscribe page and images → 200; admin writes → 401 without login |
+| A1 | Public Vercel URL | Production URL loads without login | ✅ | https://the-dispatch-murex.vercel.app (Vercel project `the-dispatch`, region `sin1`) | `e2e.txt`: all 5 pages, unsubscribe page and images → 200; dashboard actions work without login (open by choice) |
 | A2 | GitHub repository | Public repo with code, README, docs; no secrets in history | ✅ | https://github.com/helenamaria-byte/shreya | `gitleaks.txt` (full history: no leaks; none of the 12 credential values in any commit) |
 | A3 | Components Map | Mermaid source + rendered diagram showing every tool, its role, and data flow | ✅ | `docs/components-map.mmd` → `docs/components-map.svg`, embedded in the README | rendered by `scripts/render-diagrams.ts` |
 | A4 | Live external data | Real articles from live feeds present at submission time | ✅ | `lib/ingest.ts`, `lib/sources.ts` | `cron-triggers.txt` (production cron run: 45 new articles, 24/25 sources); 432 articles for 2026-W42 on the front page |
@@ -80,7 +80,7 @@ Evidence lives in [`docs/evidence/`](docs/evidence/): `test-results.txt` (full V
 |---|---|---|---|---|---|---|
 | F1 | Asia/Kolkata scheduling | 3 | Cron UTC → IST mapping correct and documented | ✅ | `lib/time.ts`, `vercel.json`, README table | test "maps the Vercel cron UTC times…" (01:30Z→Mon 07:00 … 16:30Z→Wed 22:00, 12:30Z→Thu 18:00) |
 | F2 | Wed 10 PM reminder | 3 | Sent when pending after 22:00, not when approved, never twice | ✅ | `runReminder`, cron `30 16 * * 3` (22:00–22:59 IST) | tests "not sent before 22:00, sent once after 22:00, never twice", "not sent when approved" |
-| F3 | Testable without waiting | 2 | Simulated time from dashboard and tests | ✅ | Run manually ▾ → Simulate time (IST); `run-job.ts --at=` | tests "jobs respect simulated time"; `screenshots/10-run-manually-admin.png` |
+| F3 | Testable without waiting | 2 | Simulated time from scripts and tests | ✅ | `scripts/run-job.ts <job> --at=YYYY-MM-DDTHH:mm` (IST), logged in `workflow_runs.simulated_now` | tests "jobs respect simulated time", reminder/send/report tests at simulated Wed 21:59 / 22:01, Thu 08:00 / 18:00 |
 
 ## G. Email delivery and safety (Resend) — 20 pts
 
@@ -101,10 +101,10 @@ The original "collapsible sections" criterion was the author's own suggestion, n
 | H1 | Every part of the pipeline visible | 2 | Front page, draft, articles, voice, subscribers — all working (run logs kept in Neon `workflow_runs`; diagrams in the README) | ✅ | `app/page.tsx`, `lib/dashboard.ts` | `screenshots/01`–`05`; `e2e.txt` (every page 200, all tabs present) |
 | H2 | Big picture first | 1 | Front page shows the workflow, status headline, what to do next, key numbers and this week's edition at a glance | ✅ | one headline + next action, 5-step status line, 4 numbers, rubber stamp, topic collage with one button | `screenshots/01-front-page.png` |
 | H3 | Details on click / page turning | 1 | "View this week's draft" moves the collage aside and folds to the draft; top navigation, ← → and swipe turn pages; rows expand to detail | ✅ | `app/paper.tsx` (fold animation, keyboard, swipe, reduced-motion fallback) | `screenshots/01b-pictures-move-aside.png`, `01c-paper-folding.png`, `02-draft.png` |
-| H4 | Clean newspaper design, works on mobile | 1 | Two newsprint fonts, top navigation, creases only at the edges, plain-word statuses with dots, one main button per page, admin actions in one menu, no horizontal scroll on a phone | ✅ | `app/globals.css`, `app/layout.tsx` (Playfair Display, Libre Caslon; IBM Plex Mono only for code/JSON) | `screenshots/11-phone-front-page.png`, `12-phone-draft.png` (overflow 0 px on every page) |
+| H4 | Clean newspaper design, works on mobile | 1 | Two newsprint fonts, top navigation, creases only at the edges, plain-word statuses with dots, one main button per page, no login needed (open dashboard, owner's choice), no horizontal scroll on a phone | ✅ | `app/globals.css`, `app/layout.tsx` (Playfair Display, Libre Caslon; IBM Plex Mono only for code/JSON) | `screenshots/11-phone-front-page.png`, `12-phone-draft.png` (overflow 0 px on every page) |
 | H5 | README + setup + `.env.example` | 2 | Fresh setup possible from README alone | ✅ | README (brief trace, 10 setup steps, 5-minute demo, limitations, going live), `.env.example` | — |
 | H6 | Workflow flowchart | 1 | Mermaid source + render with the decision points | ✅ | `docs/workflow-flowchart.mmd` → `.svg` | diamonds: in last four issues? · duplicate this week? · enough stories? · final draft confirmed? · still pending at Wed 10 PM? · approval before the Thursday send? · duplicate-send guard |
-| H7 | Screenshots / demo | 1 | Front page, each page, transition frames, phone view | ✅ | `scripts/screenshots.ts` against production | `docs/screenshots/01`–`13` |
+| H7 | Screenshots / demo | 1 | Front page, each page, transition frames, phone view | ✅ | `scripts/screenshots.ts` against production | `docs/screenshots/` (front page, transition frames, each page, story actions, phone views) |
 | H8 | Sample data and assumptions labelled | 1 | UI banner, `is_sample` flags, `ASSUMPTIONS.md` | ✅ | banner, "sample" tags, voice-guide source label | `docs/ASSUMPTIONS.md` (31 items) |
 
 ## I. Brief-driven additions (no extra points — they close gaps in the wording of the brief)

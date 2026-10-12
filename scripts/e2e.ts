@@ -66,29 +66,19 @@ async function main() {
     expectStatus(await fetch(`${BASE}/api/resend/webhook`, { method: "POST", body: JSON.stringify({ type: "email.bounced", data: {} }), headers: { "svix-id": "msg_x", "svix-timestamp": String(Math.floor(Date.now() / 1000)), "svix-signature": "v1,bad" } }), 401));
   await check("unsubscribe with tampered token → 400", async () =>
     expectStatus(await fetch(`${BASE}/api/unsubscribe?token=MQ.tampered`, { method: "POST", body: "List-Unsubscribe=One-Click", headers: { "content-type": "application/x-www-form-urlencoded" } }), 400));
-  await check("admin action without login → 401", async () => {
-    const form = new FormData(); form.set("action", "run_send");
-    await expectStatus(await fetch(`${BASE}/api/admin/action`, { method: "POST", body: form, headers: { accept: "application/json" } }), 401);
+  await check("open dashboard: an action works without logging in (dry-run email, nothing sent)", async () => {
+    const act = new FormData(); act.set("action", "dry_run_email");
+    const res = await fetch(`${BASE}/api/admin/action`, { method: "POST", body: act, headers: { accept: "application/json" } });
+    const j = (await res.json()) as any;
+    if (!j.ok) throw new Error(j.message);
+    return j.message;
   });
-  await check("admin login with wrong password is refused", async () => {
-    const form = new FormData(); form.set("password", "definitely-wrong");
-    const res = await fetch(`${BASE}/api/admin/login`, { method: "POST", body: form, redirect: "manual" });
-    if (!(res.headers.get("location") || "").includes("login=failed") || res.headers.get("set-cookie")) throw new Error("wrong password accepted");
+  await check("dashboard actions ignore simulated time (real clock only)", async () => {
+    const act = new FormData(); act.set("action", "run_reminder"); act.set("simulated_now", "2026-10-14T22:30");
+    const j = (await (await fetch(`${BASE}/api/admin/action`, { method: "POST", body: act, headers: { accept: "application/json" } })).json()) as any;
+    if (j.run?.details?.simulated_now) throw new Error("simulated time was accepted");
+    return j.message;
   });
-
-  if (process.env.ADMIN_PASSWORD) {
-    await check("admin login + dry-run email (no send) works", async () => {
-      const form = new FormData(); form.set("password", process.env.ADMIN_PASSWORD!);
-      const login = await fetch(`${BASE}/api/admin/login`, { method: "POST", body: form, redirect: "manual" });
-      const cookie = (login.headers.get("set-cookie") || "").split(";")[0];
-      if (!cookie.startsWith("dispatch_admin=")) throw new Error("no admin cookie");
-      const act = new FormData(); act.set("action", "dry_run_email");
-      const res = await fetch(`${BASE}/api/admin/action`, { method: "POST", body: act, headers: { cookie, accept: "application/json" } });
-      const j = (await res.json()) as any;
-      if (!j.ok) throw new Error(j.message);
-      return j.message;
-    });
-  }
 
   console.log(`\n${failures ? `${failures} check(s) FAILED` : "All checks passed"}`);
   process.exit(failures ? 1 : 0);

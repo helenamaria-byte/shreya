@@ -21,7 +21,7 @@ Every decision taken without asking, so it can be reviewed or reversed.
 9. India has no DST, so IST is treated as a fixed UTC+05:30 offset when converting wall-clock times. Display and weekday logic use `Intl` with `Asia/Kolkata`.
 10. **Manual runs.** A manual "Run ingestion now" or "Run selection" without a simulated time is a deliberate override of the schedule. The reminder and send checks always obey the schedule, so a send can never happen outside Thursday. With a simulated time, every job obeys the schedule as of that moment.
 11. **Late approval.** If the issue was not approved at the Thursday send run, it becomes `skipped`. Approving it later that same Thursday (IST) offers a "Send now" button with a confirmation. From Friday on it can't be approved and stays unsent.
-12. **"Send dry-run email"** (admin menu) renders the current draft and records who *would* receive it in the run log. It makes no API call and changes no state. `EMAIL_MODE=dry_run` is separate: it makes a real (gated) send that records `dry_run` deliveries.
+12. **"Send dry-run email"** (dashboard action) renders the current draft and records who *would* receive it in the run log. It makes no API call and changes no state. `EMAIL_MODE=dry_run` is separate: it makes a real (gated) send that records `dry_run` deliveries.
 
 ## Technical
 13. **Gemini model.** `gemini-3.8-flash` is the newest stable (non-preview) Flash model listed for this key on 2026-10-12. `gemini-2.5-flash` returns 404 for new users.
@@ -35,7 +35,7 @@ Every decision taken without asking, so it can be reviewed or reversed.
 21. **Telegram wrong-chat updates** get HTTP 200 with `ignored` (so Telegram doesn't retry) and change nothing. A wrong secret gets 401.
 22. **Sender** is `onboarding@resend.dev`; no domain is verified on the Resend account.
 23. **Neon.** The project `the-dispatch` is in AWS Singapore (`aws-ap-southeast-1`), with Vercel functions in `sin1`. Tests run on a separate Neon branch `test`, which each test truncates and re-seeds.
-24. **Admin session.** A 12-hour signed cookie (HMAC keyed by the admin password and cron secret). There are no user accounts.
+24. **Open dashboard (owner's decision, 12 Oct).** There is no login: anyone on the site can keep/edit/swap/reject stories, confirm the final draft, send articles to Telegram, edit the voice guide and import subscribers. The owner chose this knowing that anyone could then confirm the issue. Telegram still requires the webhook secret and Shreya's chat, cron still requires `CRON_SECRET`, subscriber emails stay masked, and dashboard actions run on the real clock only (simulated time is limited to `scripts/run-job.ts` and the tests).
 
 ## Added after reading the full problem statement
 25. **Approving stories individually.** The brief says she "reviews, edits, approves or swaps stories individually". Each story has its own approval (✅ Keep). Her own edit to a story counts as approving it, and a swapped-in story starts unapproved. Per-story approval never sends anything. Only **✅ Confirm final draft** (with a confirmation step) approves the issue, and it approves any stories she hadn't kept yet, naming them in the confirmation.

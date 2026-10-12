@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { isAdminRequest } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { approveIssue, approveStory, editCommentary, IssueError, rejectStory, swapStory } from "@/lib/issues";
 import { runDraft, runDryRunEmail, runIngest, runReminder, runReport, runSend, type JobResult } from "@/lib/jobs";
@@ -11,25 +10,17 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 /**
- * Every dashboard write goes through here and needs the admin session (safety invariant 7).
- * Simulated time is accepted only on this authenticated route (and in tests).
+ * Every dashboard write goes through here. By the owner's choice the dashboard is open:
+ * anyone on the site can make changes. Jobs here always run on the real clock — simulated
+ * time is only available from scripts/run-job.ts and the tests.
  */
 export async function POST(req: Request) {
   const wantsJson = (req.headers.get("accept") || "").includes("application/json");
-  if (!isAdminRequest(req)) {
-    return wantsJson ? NextResponse.json({ ok: false, error: "admin login required" }, { status: 401 })
-      : NextResponse.redirect(new URL("/?login=required", req.url), 303);
-  }
   const form = await req.formData();
   const action = String(form.get("action") ?? "");
-  const simRaw = String(form.get("simulated_now") ?? "").trim();
-  let at: Date, simulated = false;
-  try {
-    at = now(simRaw || null);
-    simulated = !!simRaw;
-  } catch {
-    return reply(req, wantsJson, false, "Invalid simulated time", "run");
-  }
+  const at = now();
+  const simulated = false;
+  const simRaw = "";
   const common = { trigger: "manual" as const, at, simulated };
 
   try {

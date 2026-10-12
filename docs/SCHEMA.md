@@ -26,7 +26,7 @@ Source: [`db/migrations/001_init.sql`](../db/migrations/001_init.sql) and [`002_
 | 4. Test/dry-run → test recipients only | `recipients(mode)` adds `AND is_test_recipient` unless mode is live. Live needs `EMAIL_MODE=live` **and** `LIVE_SEND_CONFIRMED=true`, and is forced to test under simulated time | "test mode only returns…", "simulated time can never trigger a live send" |
 | 5. Edits revoke approval | `revokeApprovalIfApproved()` runs after every edit/swap/reject/add | "edit, swap and reject each revert approved → pending_approval" |
 | 6. Only Shreya's chat + secret | The webhook route checks `X-Telegram-Bot-Api-Secret-Token` (timing-safe) and the chat ID before `handleUpdate` | "wrong secret → 401; wrong chat → ignored" |
-| 7. Cron secret / admin password | `cronAuthorized()` on every cron route, `isAdminRequest()` on `/api/admin/action` | "cron routes reject…", "dashboard write actions require the admin session" |
+| 7. Cron secret; open dashboard | `cronAuthorized()` on every cron route. The dashboard has no login (owner's choice); `/api/admin/action` ignores simulated time | "cron routes reject…", "dashboard actions are open to everyone … ignore simulated time" |
 | 8. No secrets leak | Secrets only in `.env.local` (gitignored) and Vercel env. `/api/health` returns names + booleans only. Gitleaks runs before each push | `scripts/e2e.ts` checks health output for secret values; gitleaks output in `docs/evidence/` |
 
 ## State machine (issues.status)

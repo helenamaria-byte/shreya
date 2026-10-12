@@ -122,13 +122,24 @@ describe("Telegram webhook security (E5) and cron auth (invariant 7)", () => {
     expect((await sql`SELECT count(*)::int AS n FROM workflow_runs`)[0].n).toBe(0);
   });
 
-  it("dashboard write actions require the admin session", async () => {
+  it("dashboard actions are open to everyone (owner's choice) but still need the confirmation tick and ignore simulated time", async () => {
     const issue = await makeDraft();
-    const form = new FormData();
-    form.set("action", "approve"); form.set("issue_id", String(issue.id)); form.set("confirm", "on");
-    const res = await adminAction(new Request("https://dispatch.test/api/admin/action", { method: "POST", body: form, headers: { accept: "application/json" } }));
-    expect(res.status).toBe(401);
+    const post = async (fields: Record<string, string>) => {
+      const form = new FormData();
+      for (const [k, v] of Object.entries(fields)) form.set(k, v);
+      return adminAction(new Request("https://dispatch.test/api/admin/action", { method: "POST", body: form, headers: { accept: "application/json" } }));
+    };
+    // no tick → not approved
+    await post({ action: "approve", issue_id: String(issue.id) });
     expect((await issueStatus(issue.id)).status).toBe("pending_approval");
+    // a simulated Thursday is ignored: the send check runs on the real clock and never claims the issue
+    const send = await (await post({ action: "run_send", simulated_now: "2030-01-03T08:30" })).json();
+    expect(send.run.details.simulated_now).toBeUndefined();
+    expect(calls.resend).toHaveLength(0);
+    // with the tick, anyone can confirm the final draft
+    const ok = await post({ action: "approve", issue_id: String(issue.id), confirm: "on" });
+    expect(ok.status).toBe(200);
+    expect((await issueStatus(issue.id)).status).toBe("approved");
   });
 });
 
