@@ -54,8 +54,6 @@ img { max-width: 100%; }
   position: relative; max-width: 1180px; margin: 0 auto;
   background: var(--noise), linear-gradient(180deg, var(--paper) 0%, #f0e8d7 100%);
   box-shadow: 0 30px 60px -20px rgba(40, 30, 15, .45), 0 8px 18px rgba(40, 30, 15, .18);
-  /* torn, slightly irregular edges */
-  clip-path: polygon(0.4% 0.6%, 12% 0%, 27% 0.5%, 41% 0.1%, 58% 0.6%, 73% 0%, 88% 0.5%, 99.6% 0.2%, 100% 14%, 99.5% 31%, 100% 52%, 99.6% 70%, 100% 86%, 99.4% 99.5%, 84% 100%, 66% 99.4%, 49% 100%, 33% 99.5%, 17% 100%, 0.5% 99.6%, 0% 83%, 0.5% 64%, 0% 45%, 0.4% 27%, 0% 11%);
 }
 /* creases and crumpling — strongest at the edges, fading out before the reading area */
 .sheet::before {

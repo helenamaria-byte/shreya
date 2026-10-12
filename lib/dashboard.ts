@@ -146,7 +146,9 @@ function overview(at: Date, week: string, issue: (Issue & { report_sent_at?: str
       break;
     case "pending_approval":
       set(0, "green", "Done"); set(1, "green", "Done"); set(2, "amber", `${health.approved} of ${health.count} approved`); current = 2;
-      headline = `${n} is waiting for Shreya's approval.`;
+      headline = health.approved < health.count
+        ? `${health.count - health.approved}/${health.count} stories awaiting Shreya's approval on Telegram`
+        : `All ${health.count} stories approved — final confirmation awaiting Shreya on Telegram`;
       next = pastSend ? "Approve today in Telegram to get a “Send now” button." : `Keep, edit or swap each story in Telegram, then confirm the final draft before Wed 10 PM${health.needsReview ? ` (${health.needsReview} stor${health.needsReview === 1 ? "y needs" : "ies need"} a check)` : ""}.`;
       telegram = true;
       break;

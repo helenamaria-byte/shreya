@@ -73,7 +73,7 @@ Details: [docs/SCHEMA.md](docs/SCHEMA.md).
 
 ## The dashboard: a newspaper you can page through
 
-- **Masthead:** a strip reading "Shreya's newsletter on India's startup ecosystem" above **The Dispatch**, then the top navigation: Overview · Draft · Articles · Voice · Subscribers.
+- **Masthead:** a strip reading "Shreya's article on" above **The Dispatch**, then the top navigation: Overview · Draft · Articles · Voice · Subscribers.
 - **Front page, kept deliberately simple:** one status headline with the next action, a five-step status line (Collect → Select → Review → Send → Track delivery), four numbers (articles, stories approved, unsubscribes & bounces, review time vs ~4 h by hand), a rubber stamp when approved or sent, and a collage with one picture per story (8–10) around one button: **View this week's draft**.
 - **Turning pages:** the paper **folds** to the next page. From the front page the collage pictures move aside first. Arrow keys and swipes work too, and reduced-motion users get no animation.
 - **Inside pages:** the draft (illustrated story cards with keep/edit/swap/reject, Gemini's reasons, and — folded away — approval history, topic mix vs the last four issues, reserves and the email preview), articles (why each was kept or dropped, source health), editorial voice (Learn my voice, edit, version history), and subscribers (unsubscribes, bounces, delivery tracking, CSV import). Every job run is still logged in Neon (`workflow_runs`); the components map and flowchart live in this README.

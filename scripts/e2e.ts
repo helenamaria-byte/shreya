@@ -45,7 +45,7 @@ async function main() {
 
   await check("front page: top navigation, workflow status, unsubscribes card, draft link, sample-data note", async () => {
     const html = (await (await fetch(`${BASE}/`)).text()).replace(/&#x27;/g, "'").replace(/&amp;/g, "&");
-    for (const s of ["Shreya's newsletter on India's startup ecosystem", "Assignment prototype · sample data is labelled", "News collection", "Editorial review", "Unsubscribes & bounces", "View this week's draft",
+    for (const s of ["Shreya's article on", "Assignment prototype · sample data is labelled", "News collection", "Editorial review", "Unsubscribes & bounces", "View this week's draft",
       "Draft", "Articles", "Voice", "Subscribers", "Track delivery"]) {
       if (!html.includes(s)) throw new Error(`missing “${s}”`);
     }

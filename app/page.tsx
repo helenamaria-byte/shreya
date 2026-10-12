@@ -59,7 +59,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 function Masthead({ d, admin, login }: { d: D; admin: boolean; login?: string }) {
   return (
     <header className="masthead">
-      <span className="strap">Shreya's newsletter on India's startup ecosystem</span>
+      <span className="strap">Shreya's article on</span>
       <span className="dateline">{formatIst(d.at, { weekday: "long", day: "numeric", month: "long", hour: undefined, minute: undefined })}</span>
       <a className="title" href="/" data-page="overview">The Dispatch</a>
       <div className="right"><RunMenu admin={admin} login={login} /></div>
