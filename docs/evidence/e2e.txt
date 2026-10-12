@@ -1,4 +1,4 @@
-E2E against https://the-dispatch-murex.vercel.app at 2026-10-12T15:43:13.185Z
+E2E against https://the-dispatch-murex.vercel.app at 2026-10-12T15:57:59.326Z
 
 PASS  health: DB reachable and env var names present (values never returned) — db ok, 16 env vars present, model gemini-3.8-flash, email mode test
 PASS  GET / → 200

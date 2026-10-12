@@ -4,7 +4,7 @@ import { ADMIN_COOKIE, validAdminSession } from "@/lib/auth";
 import { fmtMinutes, loadDashboard, MANUAL_MINUTES, maskEmail, type Dot } from "@/lib/dashboard";
 import { renderEmail } from "@/lib/email";
 import { formatIst, SCHEDULE } from "@/lib/time";
-import { topicImage } from "@/lib/topic-art";
+import { tc, topicImage } from "@/lib/topic-art";
 import { TOPICS } from "@/lib/topics";
 import { Paper, type Tab } from "./paper";
 
@@ -109,10 +109,10 @@ function Overview({ d }: { d: D }) {
       <Workflow d={d} />
 
       <section className="cards" aria-label="This week in numbers">
-        <Card href="/?p=articles" num={d.counts.total} lbl="Articles collected" sub={`from ${d.activeSources.length} sources`} />
-        <Card href="/?p=draft" num={hasDraft ? `${d.health.approved}/${d.health.count}` : "—"} lbl="Stories approved" sub={hasDraft ? `${d.health.topics.length} topics` : "draft due Wed 3 PM"} />
-        <Card href="/?p=subscribers" num={suppressed} lbl="Unsubscribes & bounces" sub="all suppressed" />
-        <Card href="/?p=draft" num={d.review ? fmtMinutes(d.review.minutes) : "—"} lbl={d.review?.done ? "Review time" : "In review"} sub={`vs ~${MANUAL_MINUTES / 60} h by hand`} />
+        <Card tint="sage" href="/?p=articles" num={d.counts.total} lbl="Articles collected" sub={`from ${d.activeSources.length} sources`} />
+        <Card tint="ochre" href="/?p=draft" num={hasDraft ? `${d.health.approved}/${d.health.count}` : "—"} lbl="Stories approved" sub={hasDraft ? `${d.health.topics.length} topics` : "draft due Wed 3 PM"} />
+        <Card tint="rose" href="/?p=subscribers" num={suppressed} lbl="Unsubscribes & bounces" sub="all suppressed" />
+        <Card tint="slate" href="/?p=draft" num={d.review ? fmtMinutes(d.review.minutes) : "—"} lbl={d.review?.done ? "Review time" : "In review"} sub={`vs ~${MANUAL_MINUTES / 60} h by hand`} />
       </section>
 
       <section className="edition" aria-label="This week's edition">
@@ -120,7 +120,7 @@ function Overview({ d }: { d: D }) {
           {shown.map((t, i) => {
             const s = spots[i];
             return (
-              <figure className={`tile${shown.length > 8 ? " small" : ""}`} key={t.key} style={{ "--x": s.x, "--y": s.y, "--r": s.r, "--sx": s.sx, "--sy": s.sy } as React.CSSProperties}>
+              <figure className={`tile${shown.length > 8 ? " small" : ""}`} key={t.key} style={{ ...tc(t.topic), "--x": s.x, "--y": s.y, "--r": s.r, "--sx": s.sx, "--sy": s.sy } as React.CSSProperties}>
                 <div style={{ position: "relative", width: "100%", height: "100%" }}>
                   <Image src={topicImage(t.topic)} alt={`Illustration for ${t.topic}`} fill sizes="(max-width: 760px) 30vw, 220px" />
                 </div>
@@ -138,10 +138,10 @@ function Overview({ d }: { d: D }) {
   );
 }
 
-function Card({ href, num, lbl, sub }: { href: string; num: React.ReactNode; lbl: string; sub: string }) {
+function Card({ href, num, lbl, sub, tint }: { href: string; num: React.ReactNode; lbl: string; sub: string; tint: string }) {
   const page = new URLSearchParams(href.split("?")[1]).get("p") ?? "overview";
   return (
-    <a className="card" href={href} data-page={page}>
+    <a className={`card tint-${tint}`} href={href} data-page={page}>
       <span className="num">{num}</span>
       <span className="lbl">{lbl}</span>
       <span className="sub">{sub}</span>
@@ -175,7 +175,7 @@ function DraftPage({ d, admin }: { d: D; admin: boolean }) {
 
       <section className="draft-grid">
         {d.stories.map((s, i) => (
-          <article key={s.id} className={`story${i === 0 ? " lead" : ""}`} style={{ "--i": i } as React.CSSProperties}>
+          <article key={s.id} className={`story${i === 0 ? " lead" : ""}`} style={{ ...tc(s.topic), "--i": i } as React.CSSProperties}>
             <div className="art">
               <Image src={topicImage(s.topic)} alt={`Illustration for ${s.topic}`} fill sizes={i === 0 ? "(max-width: 760px) 100vw, 560px" : "(max-width: 760px) 100vw, 360px"} />
               <span className="pos">{s.position}</span>
@@ -247,8 +247,8 @@ function DraftPage({ d, admin }: { d: D; admin: boolean }) {
         <details className="nested">
           <summary>Reserves ({d.reserves.length}) and removed stories ({d.removed.length})</summary>
           <div className="inner">
-            {d.reserves.map((r) => <p key={r.id} className="small"><span className="tag">reserve {r.reserve_rank}</span> {r.title} <span className="muted">· {r.topic}</span></p>)}
-            {d.removed.map((r) => <p key={r.id} className="small"><span className="tag">{r.state.replace("_", " ")}</span> {r.title} <span className="muted">· {r.topic}</span></p>)}
+            {d.reserves.map((r) => <p key={r.id} className="small"><span className="tag">reserve {r.reserve_rank}</span> {r.title} <span className="ttag" style={tc(r.topic)}>{r.topic}</span></p>)}
+            {d.removed.map((r) => <p key={r.id} className="small"><span className="tag">{r.state.replace("_", " ")}</span> {r.title} <span className="ttag" style={tc(r.topic)}>{r.topic}</span></p>)}
             {!d.reserves.length && !d.removed.length && <p className="muted small">None.</p>}
           </div>
         </details>
@@ -321,7 +321,7 @@ function ArticlesPage({ d, sp }: { d: D; sp: SP }) {
         </div>
         <div className="chips" aria-label="Filter by topic">
           <Chip href={filterHref(sp, { atopic: undefined })} on={!sp.atopic}>All topics</Chip>
-          {TOPICS.map((t) => <Chip key={t} href={filterHref(sp, { atopic: t })} on={sp.atopic === t}>{t} ({d.topicCounts.find((x) => x.topic === t)?.n ?? 0})</Chip>)}
+          {TOPICS.map((t) => <Chip key={t} topic={t} href={filterHref(sp, { atopic: t })} on={sp.atopic === t}>{t} ({d.topicCounts.find((x) => x.topic === t)?.n ?? 0})</Chip>)}
         </div>
       </div>
       <div className="rows" style={{ marginTop: 14 }}>
@@ -333,7 +333,7 @@ function ArticlesPage({ d, sp }: { d: D; sp: SP }) {
               <summary className="g-articles">
                 <span className="cell-title">{a.title}</span>
                 <span className="muted small cell-title">{a.source_name}</span>
-                <span><span className="tag">{a.topic ?? "untagged"}</span></span>
+                <span><span className="ttag" style={tc(a.topic)}>{a.topic ?? "untagged"}</span></span>
                 <span className="muted small">{a.published_at ? formatIst(a.published_at, { weekday: undefined, hour: undefined, minute: undefined }) : "—"}</span>
                 <Status dot={st.dot} text={st.label} />
               </summary>
@@ -444,11 +444,11 @@ function SubscribersPage({ d, admin }: { d: D; admin: boolean }) {
         <p className="lede">Gmail's one-click unsubscribe works on every email (List-Unsubscribe + List-Unsubscribe-Post), plus a signed link in the footer. Hard bounces and spam complaints arrive through signed Resend webhooks; temporary bounces are counted and only suppress after 3 in a row. Suppressed addresses never receive another issue.</p>
       </div></section>
       <div className="stats">
-        <div><div className="num">{d.subCounts.active}</div><div className="lbl">Active</div></div>
-        <div><div className="num">{d.subCounts.unsubscribed}</div><div className="lbl">Unsubscribed</div></div>
-        <div><div className="num">{d.subCounts.bounced}</div><div className="lbl">Bounced</div></div>
-        <div><div className="num">{d.subCounts.complained}</div><div className="lbl">Spam complaints</div></div>
-        <div><div className="num">{d.softWatch}</div><div className="lbl">Soft-bounce watch</div></div>
+        <div className="ink-green"><div className="num">{d.subCounts.active}</div><div className="lbl">Active</div></div>
+        <div className="ink-grey"><div className="num">{d.subCounts.unsubscribed}</div><div className="lbl">Unsubscribed</div></div>
+        <div className="ink-red"><div className="num">{d.subCounts.bounced}</div><div className="lbl">Bounced</div></div>
+        <div className="ink-plum"><div className="num">{d.subCounts.complained}</div><div className="lbl">Spam complaints</div></div>
+        <div className="ink-ochre"><div className="num">{d.softWatch}</div><div className="lbl">Soft-bounce watch</div></div>
       </div>
       <section className="columns">
         <div className="box">
@@ -543,7 +543,7 @@ function RunMenu({ admin, login }: { admin: boolean; login?: string }) {
 }
 
 const Status = ({ dot, text }: { dot: Dot; text: string }) => <span className="status small"><span className={`dot ${dot}`} />{text}</span>;
-const Chip = ({ href, on, children }: { href: string; on: boolean; children: React.ReactNode }) => <a className={`chip${on ? " on" : ""}`} href={href}>{children}</a>;
+const Chip = ({ href, on, children, topic }: { href: string; on: boolean; children: React.ReactNode; topic?: string }) => <a className={`chip${on ? " on" : ""}${topic ? " tchip" : ""}`} style={topic ? tc(topic) : undefined} href={href}>{children}</a>;
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const sourceWord = (s?: string) => ({ learned: "learned from her writing", edited: "edited", assumed: "assumed voice" } as Record<string, string>)[s ?? "assumed"] ?? s ?? "";
 
