@@ -1,0 +1,19 @@
+# gitleaks — full git history of the-dispatch (2026-10-12T11:31:05Z)
+$ gitleaks git --redact .
+INF 3 commits scanned.
+INF scanned ~1453250 bytes (1.45 MB) in 515ms
+INF no leaks found
+
+$ grep for the literal credential values across all commits (values not shown)
+GEMINI_API_KEY: 0 occurrence(s)
+GNEWS_API_KEY: 0 occurrence(s)
+NEON_API_KEY: 0 occurrence(s)
+TELEGRAM_BOT_TOKEN: 0 occurrence(s)
+RESEND_API_KEY: 0 occurrence(s)
+GITHUB_TOKEN: 0 occurrence(s)
+VERCEL_TOKEN: 0 occurrence(s)
+CRON_SECRET: 0 occurrence(s)
+ADMIN_PASSWORD: 0 occurrence(s)
+TELEGRAM_WEBHOOK_SECRET: 0 occurrence(s)
+UNSUBSCRIBE_SIGNING_SECRET: 0 occurrence(s)
+RESEND_WEBHOOK_SECRET: 0 occurrence(s)
