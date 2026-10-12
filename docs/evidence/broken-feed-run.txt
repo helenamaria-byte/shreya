@@ -1,0 +1,32 @@
+POST /api/admin/action run_ingest (include broken test feed) → HTTP 200
+run #9 status=success
+Done: 1 new articles from 24/26 sources · 0 duplicates · 0 covered before · 2 feed(s) failed
+
+ok     Business Standard Technology         fetched=30 new=0
+ok     Business Today Tech                  fetched=30 new=0
+ok     BusinessLine Info-Tech               fetched=30 new=0
+ok     Entrackr                             fetched=24 new=0
+ok     ET Markets IPOs                      fetched=12 new=0
+ok     ET Startups                          fetched=6 new=0
+ok     ET Tech                              fetched=30 new=0
+ok     GNews: AI startups                   fetched=10 new=0
+ok     GNews: climate & EV                  fetched=10 new=0
+ok     GNews: fintech                       fetched=10 new=0
+ok     GNews: IPOs                          fetched=0 new=0
+ok     GNews: layoffs & talent              fetched=10 new=0
+ok     GNews: startup funding               fetched=10 new=0
+ok     Google News: AI startups             fetched=14 new=0
+ok     Google News: quick commerce & D2C    fetched=11 new=0
+ok     Google News: startup funding         fetched=14 new=0
+ok     Google News: startup policy          fetched=11 new=0
+ok     Inc42                                fetched=24 new=0
+ok     Indian Express Tech                  fetched=29 new=0
+failed MediaNama                            fetched=0 new=0  error: HTTP 403
+ok     Mint Companies                       fetched=30 new=1
+ok     Mint Technology                      fetched=28 new=0
+ok     TechCrunch India                     fetched=0 new=0
+failed TEST broken feed                     fetched=0 new=0  error: fetch failed
+ok     The Hindu Business                   fetched=30 new=0
+ok     YourStory                            fetched=20 new=0
+
+dedup: {"pastIssue":0,"sameUrl":0,"similarTitle":0}  tagging: {"tagged":1,"geminiCalls":1,"fallback":false}

@@ -265,7 +265,8 @@ export function splitSentences(text: string): string[] {
 export function unsupportedNumbers(commentary: string, source: string): string[] {
   const norm = (s: string) => s.replace(/(?<=\d),(?=\d)/g, "");
   const src = norm(source.toLowerCase());
-  const found = norm(commentary).match(/\d+(?:\.\d+)?/g) || [];
+  // Digits inside alphanumeric tokens (B2B, Q3, H1B) are not figures.
+  const found = norm(commentary).match(/(?<![A-Za-z\d.])\d+(?:\.\d+)?/g) || [];
   return [...new Set(found.filter((n) => !new RegExp(`(^|[^\\d.])${n.replace(".", "\\.")}(?![\\d])`).test(src)))];
 }
 

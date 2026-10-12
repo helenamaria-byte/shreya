@@ -1,32 +1,32 @@
 {
-  "id": 4,
-  "started_at": "2026-10-12T11:09:14.600Z",
-  "summary": "45 new articles from 24/25 sources · 6 duplicates · 0 covered before · 1 feed(s) failed",
+  "id": 9,
+  "started_at": "2026-10-12T11:16:04.404Z",
+  "summary": "1 new articles from 24/26 sources · 0 duplicates · 0 covered before · 2 feed(s) failed",
   "details": {
     "week": "2026-W42",
     "dedup": {
       "sameUrl": 0,
       "pastIssue": 0,
-      "similarTitle": 6
+      "similarTitle": 0
     },
     "tagging": {
-      "tagged": 39,
+      "tagged": 1,
       "fallback": false,
       "geminiCalls": 1
     },
-    "inserted": 45,
+    "inserted": 1,
     "perSource": [
       {
         "name": "Business Standard Technology",
         "status": "ok",
         "fetched": 30,
-        "inserted": 1
+        "inserted": 0
       },
       {
         "name": "Business Today Tech",
         "status": "ok",
         "fetched": 30,
-        "inserted": 1
+        "inserted": 0
       },
       {
         "name": "BusinessLine Info-Tech",
@@ -62,19 +62,19 @@
         "name": "GNews: AI startups",
         "status": "ok",
         "fetched": 10,
-        "inserted": 6
+        "inserted": 0
       },
       {
         "name": "GNews: climate & EV",
         "status": "ok",
         "fetched": 10,
-        "inserted": 10
+        "inserted": 0
       },
       {
         "name": "GNews: fintech",
         "status": "ok",
         "fetched": 10,
-        "inserted": 7
+        "inserted": 0
       },
       {
         "name": "GNews: IPOs",
@@ -86,13 +86,13 @@
         "name": "GNews: layoffs & talent",
         "status": "ok",
         "fetched": 10,
-        "inserted": 9
+        "inserted": 0
       },
       {
         "name": "GNews: startup funding",
         "status": "ok",
         "fetched": 10,
-        "inserted": 10
+        "inserted": 0
       },
       {
         "name": "Google News: AI startups",
@@ -128,7 +128,7 @@
         "name": "Indian Express Tech",
         "status": "ok",
         "fetched": 29,
-        "inserted": 1
+        "inserted": 0
       },
       {
         "name": "MediaNama",
@@ -141,7 +141,7 @@
         "name": "Mint Companies",
         "status": "ok",
         "fetched": 30,
-        "inserted": 0
+        "inserted": 1
       },
       {
         "name": "Mint Technology",
@@ -152,6 +152,13 @@
       {
         "name": "TechCrunch India",
         "status": "ok",
+        "fetched": 0,
+        "inserted": 0
+      },
+      {
+        "name": "TEST broken feed",
+        "error": "fetch failed",
+        "status": "failed",
         "fetched": 0,
         "inserted": 0
       },

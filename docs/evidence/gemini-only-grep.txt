@@ -1,0 +1,14 @@
+# Gemini-only check — 2026-10-12T11:18:39Z
+
+$ grep -rniE "anthropic|claude|openai|gpt-|mistral|cohere|ollama|langchain|@ai-sdk|groq|llama" app lib scripts package.json
+(no matches)
+
+$ grep -rn "@google/genai\|GEMINI_MODEL\|generateContent" app lib package.json
+app/api/health/route.ts:8:  "DATABASE_URL", "GEMINI_API_KEY", "GEMINI_MODEL", "GNEWS_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID",
+lib/gemini.ts:1:import { GoogleGenAI } from "@google/genai";
+lib/gemini.ts:5:  const m = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+lib/gemini.ts:6:  if (!/flash/i.test(m)) throw new Error(`GEMINI_MODEL must be a Flash model, got ${m}`);
+lib/gemini.ts:33:      const res = await ai().models.generateContent({
+package.json:22:    "@google/genai": "^2.28.0",
+
+Production /api/health geminiModel: gemini-3.8-flash

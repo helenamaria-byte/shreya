@@ -76,6 +76,8 @@ describe("commentary checks (D4, D6)", () => {
     const src = "Zetwerk sets IPO price band at Rs 143-151; eyes Rs 5,012 Cr from issue";
     expect(unsupportedNumbers("The Rs 5,012 crore issue at 143 to 151 is big.", src)).toEqual([]);
     expect(unsupportedNumbers("A ₹9,000 crore valuation and 40% growth.", src)).toEqual(["9000", "40"]);
+    // found live: "B2B" must not be read as the number 2
+    expect(unsupportedNumbers("A bellwether for B2B listings, Q3 results and H1B hiring.", src)).toEqual([]);
     const c = checkCommentary("Zetwerk wants Rs 5,012 crore. That implies a 40x multiple, I think.", src);
     expect(c.needsReview).toBe(true);
     expect(c.notes.join()).toMatch(/40/);

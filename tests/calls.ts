@@ -2,4 +2,7 @@
 export const calls: {
   telegram: { method: string; body: any }[];
   resend: { path: string; body: any; headers: Record<string, string> }[];
-} = { telegram: [], resend: [] };
+  gemini: { prompt: string; system: string }[];
+  /** Set by a test to answer Gemini calls; returns the JSON object the model "replies" with. */
+  geminiResponder?: (prompt: string) => unknown;
+} = { telegram: [], resend: [], gemini: [] };

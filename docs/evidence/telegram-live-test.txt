@@ -1,0 +1,22 @@
+# Live Telegram test — 2026-10-12T11:26:23.297Z — https://the-dispatch-murex.vercel.app
+1. run_draft (force) → Done: Issue #5: 9 stories across 7 topics from 150 candidates · Telegram sent
+   issue #5 status=pending_approval draft_sent_to_telegram_at=Mon Oct 12 2026 16:57:13 GMT+0530 (India Standard Time)
+2. wrong secret → HTTP 401; wrong chat → {"ok":false,"ignored":"unauthorized chat"}; status still pending_approval
+3. ✏️ Edit story 1 → {"ok":true,"result":"edit: awaiting reply"}
+   reply → {"ok":true,"result":"edited via reply"}
+   DB story 1 commentary: "Test edit from the live check: this replaces Gemini's commentary. It should appear in Neon immediately."
+4. /edit 2 → {"ok":true,"result":"edited via /edit"}
+   DB story 2 commentary: "Edited with the /edit command. Two sentences, as required."
+5. 🔄 Swap story 3 ("Hero Electronix-Owned Tessolve Secures $75 Mn To Expand Semiconductor Capabilities") → {"ok":true,"result":"swapped via reserve"}
+   DB: old story state=swapped_out; position 3 is now "Delhi HC protects Vijay Deverakonda’s personality rights from AI misuse"
+6. ❌ Reject story 4 ("Users won’t need to open multiple account aggregator handles under RBI’s interoperability plan: Sahamati CEO") → {"ok":true,"result":"story rejected"}
+   DB: state=rejected; selected stories now 8
+7. ✅ Approve → {"ok":true,"result":"approve: confirm asked"}; status still pending_approval (confirmation asked)
+   Yes → {"ok":true,"result":"approved"}
+   DB: status=approved approved_at=Mon Oct 12 2026 16:57:23 GMT+0530 (India Standard Time) approved_via=telegram
+8. Edit after approval → {"ok":true,"result":"edited via /edit"}
+   DB: status=pending_approval approved_at=null
+9. /status → {"ok":true,"result":"status"}
+   latest events: draft_created(dashboard) → draft_created(dashboard) → draft_sent(telegram) → edited(telegram) → edited(telegram) → swapped(telegram) → story_rejected(telegram) → approved(telegram) → edited(telegram) → approval_revoked(telegram)
+10. fresh draft for Shreya → Done: Issue #5: 9 stories across 7 topics from 150 candidates · Telegram sent
+    issue #5 status=pending_approval (left pending for manual approval in Telegram)
