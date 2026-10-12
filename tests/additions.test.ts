@@ -5,12 +5,13 @@ import { recipients, sendIssue } from "../lib/email";
 import { approveIssue, editCommentary, getStories, swapStory } from "../lib/issues";
 import { runDraft, runReport } from "../lib/jobs";
 import { importSubscribersCsv } from "../lib/subscribers";
+import { includePinned, type Candidate } from "../lib/editorial";
 import { handleUpdate, storyKeyboard } from "../lib/telegram";
 import { istDate } from "../lib/time";
 import { learnVoice } from "../lib/voice";
 import { POST as resendWebhook } from "../app/api/resend/webhook/route";
 import { calls } from "./calls";
-import { addArticle, day, issueStatus, makeDraft, resetDb, THU_1200, WED_1500, WED_2159 } from "./helpers";
+import { addArticle, day, issueStatus, makeDraft, MON_0900, resetDb, THU_1200, WED_1500, WED_2159, WEEK } from "./helpers";
 
 const callback = (data: string, messageId = 77) => ({ update_id: 1, callback_query: { id: "cb", data, message: { message_id: messageId, chat: { id: 424242 } }, from: { id: 424242 } } });
 
@@ -184,6 +185,7 @@ describe("Articles page → Send to Telegram → ➕ Add to draft", () => {
     const msg = calls.telegram.find((c) => c.method === "sendMessage");
     expect(msg?.body.text).toMatch(/Hand-picked story about Indian SaaS exports/);
     expect(JSON.stringify(msg?.body.reply_markup)).toContain(`ad:${id}`);
+    expect(JSON.stringify(msg?.body.reply_markup)).toContain(`nx:${id}`);
   });
 
   it("➕ adds it as the next story with Gemini commentary, unapproved, and revokes an approval", async () => {
@@ -211,5 +213,36 @@ describe("Articles page → Send to Telegram → ➕ Add to draft", () => {
     expect(await handleUpdate(callback(`ad:${reserve.article_id}`), WED_2159)).toBe("article added to draft");
     expect(calls.gemini).toHaveLength(0);
     expect((await getStories(full.id)).some((s) => s.id === reserve.id)).toBe(true);
+  });
+});
+
+describe("⏭ Save for next issue", () => {
+  beforeEach(resetDb);
+
+  it("before the draft exists it pins the article for this week; after, for next week", async () => {
+    const id = await addArticle("Pin me for the issue", { topic: "Fintech", week: WEEK });
+    expect(await handleUpdate(callback(`nx:${id}`), MON_0900)).toBe(`saved for ${WEEK}`);
+    let row = (await sql`SELECT pinned_at, issue_week FROM articles WHERE id = ${id}`)[0];
+    expect(row.pinned_at).not.toBeNull();
+    expect(row.issue_week).toBe(WEEK);
+    expect(calls.telegram.some((c) => /Saved “Pin me for the issue” for this week/.test(c.body.text ?? ""))).toBe(true);
+
+    await makeDraft({ n: 8, status: "sent" });
+    const later = await addArticle("Too late for this week", { topic: "Fintech", week: WEEK });
+    expect(await handleUpdate(callback(`ad:${later}`), WED_2159)).toMatch(/Save for next issue/);
+    const res = await handleUpdate(callback(`nx:${later}`), WED_2159);
+    row = (await sql`SELECT issue_week FROM articles WHERE id = ${later}`)[0];
+    expect(row.issue_week).not.toBe(WEEK);
+    expect(res).toBe(`saved for ${row.issue_week}`);
+  });
+
+  it("a pinned article is always in the selection, even if Gemini left it out", () => {
+    const cands: Candidate[] = Array.from({ length: 14 }, (_, i) => ({ id: i + 1, title: `S${i + 1}`, source_name: "x", topic: ["Fintech", "AI & Deeptech", "Markets & IPOs"][i % 3], summary: "", published_at: null, url: "u", pinned: i === 13 }));
+    const sel = { selected: cands.slice(0, 10).map((c, i) => ({ article_id: c.id, position: i + 1, rationale: "r" })), reserves: [{ article_id: 11, rank: 1, rationale: "r" }] };
+    const out = includePinned(sel, cands);
+    expect(out.selection.selected.map((s) => s.article_id)).toContain(14);
+    expect(out.selection.selected).toHaveLength(10);
+    expect(out.selection.reserves[0].article_id).toBe(10);
+    expect(out.log.join()).toMatch(/pinned id 14 replaced id 10/);
   });
 });

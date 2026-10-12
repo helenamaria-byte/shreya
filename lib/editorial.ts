@@ -11,7 +11,7 @@ const MAX_CANDIDATES_IN_PROMPT = 150;
 
 export type Candidate = {
   id: number; title: string; source_name: string; topic: string; summary: string | null;
-  published_at: string | null; url: string;
+  published_at: string | null; url: string; pinned?: boolean;
 };
 
 export async function latestVoiceGuide(): Promise<{ id: number; version: number; content: string; updated_at: string } | null> {
@@ -22,12 +22,12 @@ export async function latestVoiceGuide(): Promise<{ id: number; version: number;
 /** Non-duplicate, tagged, on-topic articles collected this week that aren't already part of the issue. */
 export async function candidates(week: string, excludeIssueId?: number): Promise<Candidate[]> {
   return query(
-    `SELECT a.id, a.title, a.source_name, a.topic, a.summary, a.published_at, a.url
+    `SELECT a.id, a.title, a.source_name, COALESCE(a.topic, 'Other') AS topic, a.summary, a.published_at, a.url, a.pinned_at IS NOT NULL AS pinned
      FROM articles a
-     WHERE a.issue_week = $1 AND a.duplicate_of IS NULL AND NOT a.is_sample
-       AND a.topic IS NOT NULL AND a.topic <> 'Other'
+     WHERE a.issue_week = $1 AND NOT a.is_sample
+       AND ((a.duplicate_of IS NULL AND a.topic IS NOT NULL AND a.topic <> 'Other') OR a.pinned_at IS NOT NULL)
        AND ($2::int IS NULL OR a.id NOT IN (SELECT article_id FROM issue_stories WHERE issue_id = $2))
-     ORDER BY a.published_at DESC NULLS LAST, a.id DESC LIMIT $3`,
+     ORDER BY (a.pinned_at IS NOT NULL) DESC, a.published_at DESC NULLS LAST, a.id DESC LIMIT $3`,
     [week, excludeIssueId ?? null, MAX_CANDIDATES_IN_PROMPT],
   ) as Promise<Candidate[]>;
 }
@@ -107,8 +107,9 @@ export function selectionPrompt(cands: Candidate[], voice: string, past: { issue
     `Headlines from the last four issues (do NOT repeat these stories or the same underlying events):`,
     past.length ? past.map((p) => `#${p.issue_number}: ${p.title}`).join("\n") : "(none)",
     ``,
+    cands.some((c) => c.pinned) ? `Stories marked [PINNED BY SHREYA] were chosen by Shreya herself and MUST be in the selection.` : "",
     `Candidates (id | topic | source | published | title | summary):`,
-    cands.map((c) => `${c.id} | ${c.topic} | ${c.source_name} | ${c.published_at ? new Date(c.published_at).toISOString().slice(0, 10) : "?"} | ${c.title} | ${(c.summary || "").slice(0, 220)}`).join("\n"),
+    cands.map((c) => `${c.id} | ${c.topic} | ${c.source_name} | ${c.published_at ? new Date(c.published_at).toISOString().slice(0, 10) : "?"} | ${c.pinned ? "[PINNED BY SHREYA] " : ""}${c.title} | ${(c.summary || "").slice(0, 220)}`).join("\n"),
     feedback?.length ? `\nYour previous answer was invalid. Fix these problems:\n- ${feedback.join("\n- ")}` : "",
   ].join("\n");
 }
@@ -188,6 +189,28 @@ export function repairSelection(sel: Selection, cands: Candidate[], pastArticleI
   };
 }
 
+/** Articles Shreya pinned ("Save for next issue") are always in the draft, replacing the lowest-ranked pick if needed. */
+export function includePinned(sel: Selection, cands: Candidate[]): { selection: Selection; log: string[] } {
+  const log: string[] = [];
+  let selected = [...sel.selected].sort((a, b) => a.position - b.position);
+  let reserves = [...sel.reserves];
+  for (const c of cands.filter((x) => x.pinned)) {
+    if (selected.some((s) => s.article_id === c.id)) continue;
+    reserves = reserves.filter((r) => r.article_id !== c.id);
+    const entry = { article_id: c.id, position: 0, rationale: "Pinned by Shreya for this issue." };
+    if (selected.length < MAX_STORIES) { selected.push(entry); log.push(`added pinned id ${c.id}`); continue; }
+    const idx = [...selected.keys()].reverse().find((i) => !cands.find((x) => x.id === selected[i].article_id)?.pinned);
+    if (idx === undefined) continue;
+    const out = selected[idx];
+    reserves = [{ article_id: out.article_id, rank: 0, rationale: out.rationale }, ...reserves];
+    selected[idx] = entry;
+    log.push(`pinned id ${c.id} replaced id ${out.article_id}`);
+  }
+  selected = selected.map((s, i) => ({ ...s, position: i + 1 }));
+  reserves = reserves.slice(0, RESERVE_COUNT).map((r, i) => ({ ...r, rank: i + 1 }));
+  return { selection: { selected, reserves }, log };
+}
+
 export async function selectStories(cands: Candidate[], voice: string, past: { issue_number: number; title: string }[]) {
   const system = "You are a sharp, careful newsletter editor. Return JSON only, matching the schema.";
   let sel = await generateJson<Selection>({ system, prompt: selectionPrompt(cands, voice, past), schema: SELECTION_SCHEMA, temperature: 0.5 });
@@ -205,6 +228,9 @@ export async function selectStories(cands: Candidate[], voice: string, past: { i
     sel = repaired.selection;
     repairLog = repaired.log;
   }
+  const pinned = includePinned(sel, cands);
+  sel = pinned.selection;
+  repairLog = [...repairLog, ...pinned.log];
   return { selection: sel, attempts, repairLog, geminiCalls: attempts.length };
 }
 

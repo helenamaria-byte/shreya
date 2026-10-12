@@ -30,7 +30,7 @@ telegram, jobs = cron jobs + run logging, time = IST schedule) · `app/api/*` (c
 4. In `test`/`dry_run` mode nothing goes to non-test recipients. Live needs `EMAIL_MODE=live` AND `LIVE_SEND_CONFIRMED=true`, and never with simulated time.
 5. Edits after approval revoke approval (`revokeApprovalIfApproved`).
 6. Only the configured Telegram chat, with the correct webhook secret, can change drafts or approve.
-7. Cron routes reject requests without `CRON_SECRET`. The dashboard is open by the owner's choice (no login); its actions always use the real clock.
+7. Cron routes reject requests without `CRON_SECRET`. The dashboard is view-only for the draft: `/api/admin/action` has no approve/keep/edit/swap/reject actions — those exist only in the Telegram webhook (secret + Shreya's chat).
 8. Secrets never appear in the repo, logs, responses, or UI. Run gitleaks before every push.
 
 ## Rules for agents

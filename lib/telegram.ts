@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { sql } from "./db";
 import { sendIssue } from "./email";
 import {
-  addArticleToDraft, addReplacement, approveIssue, approveStory, draftHealth, editCommentary, getIssue, getIssueByWeek, getStories, getStory, IssueError,
+  addArticleToDraft, addReplacement, approveIssue, approveStory, saveForNextIssue, draftHealth, editCommentary, getIssue, getIssueByWeek, getStories, getStory, IssueError,
   logEvent, rejectIssue, rejectStory, swapStory, type Issue, type Story,
 } from "./issues";
 import { formatIst, now, weekKey } from "./time";
@@ -104,7 +104,7 @@ export async function sendArticle(articleId: number) {
     a.summary ? `\n${esc(String(a.summary).slice(0, 600))}` : "",
     a.duplicate_reason ? `\n⚠️ Marked as ${String(a.duplicate_reason).replace(/_/g, " ")}.` : "",
   ].filter(Boolean).join("\n");
-  await send(text, [[{ text: "➕ Add to draft", callback_data: `ad:${a.id}` }]]);
+  await send(text, [[{ text: "➕ Add to this week's draft", callback_data: `ad:${a.id}` }], [{ text: "⏭ Save for next issue", callback_data: `nx:${a.id}` }]]);
 }
 
 // ---------------------------------------------------------------------------
@@ -238,6 +238,12 @@ async function handleCallback(cb: any, at: Date): Promise<string> {
         await send(`➕ Added as story ${r.story.position} — ${r.health.count} stories across ${r.health.topics.length} topics. Gemini wrote this commentary; keep it or edit it:\n\n${storyText(r.story)}`, storyKeyboard(r.story));
         await revokedNote(r.revoked);
         return "article added to draft";
+      }
+      case "nx": {
+        const r = await saveForNextIssue(id, "telegram", at);
+        await answer(cb.id, "Saved");
+        await send(`⏭ Saved “${esc(r.title)}” for ${r.thisWeek ? "this week's issue" : `the next issue (${r.targetWeek})`}. Gemini will include it when it drafts on Wednesday, and you'll review it then.`);
+        return `saved for ${r.targetWeek}`;
       }
       case "k": {
         const r = await approveStory(id, "telegram");

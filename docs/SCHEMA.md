@@ -5,7 +5,7 @@ Source: [`db/migrations/001_init.sql`](../db/migrations/001_init.sql) and [`002_
 | Table | Purpose | Key columns / constraints |
 |---|---|---|
 | `sources` | RSS feeds and GNews queries, plus their health | `name` UNIQUE, `type` ∈ rss/gnews, `active`, `last_fetched_at`, `last_status` (ok/failed), `last_error`, `last_count` |
-| `articles` | Every collected article | `url_hash` **UNIQUE** (sha256 of raw link), `canonical_hash` (normalised link), `duplicate_of` → articles, `duplicate_reason` ∈ same_url / similar_title / covered_in_past_issue, `duplicate_score`, `topic`, `topic_confidence`, `topic_method` (gemini/keyword), `issue_week` (ISO week in IST), `is_sample`. GIN trigram index on `title` |
+| `articles` | Every collected article | `pinned_at` (saved by Shreya for the next issue), `url_hash` **UNIQUE** (sha256 of raw link), `canonical_hash` (normalised link), `duplicate_of` → articles, `duplicate_reason` ∈ same_url / similar_title / covered_in_past_issue, `duplicate_score`, `topic`, `topic_confidence`, `topic_method` (gemini/keyword), `issue_week` (ISO week in IST), `is_sample`. GIN trigram index on `title` |
 | `issues` | One per week | `week_key` **UNIQUE**, `issue_number` UNIQUE, `status` ∈ collecting / drafting / insufficient_stories / pending_approval / approved / rejected / sending / sent / skipped, `draft_sent_to_telegram_at`, `reminder_sent_at`, `approved_at`, `approved_via` ∈ telegram/dashboard, `sent_at`, `report_sent_at` (delivery report, once), `is_sample` |
 | `issue_stories` | Draft stories and reserves | **UNIQUE(issue_id, article_id)**, `state` ∈ selected / reserve / rejected / swapped_out, `position`, `reserve_rank`, `commentary`, `original_commentary`, `edited_at`, `approved_at` (per-story approval), `gemini_rationale`, `connects_with`, `needs_review`, `review_notes` |
 | `issue_events` | Approval timeline (draft sent, edits, reminder, approval, revocation, send) | `issue_id`, `event`, `channel`, `detail`, `created_at` |
@@ -26,7 +26,7 @@ Source: [`db/migrations/001_init.sql`](../db/migrations/001_init.sql) and [`002_
 | 4. Test/dry-run → test recipients only | `recipients(mode)` adds `AND is_test_recipient` unless mode is live. Live needs `EMAIL_MODE=live` **and** `LIVE_SEND_CONFIRMED=true`, and is forced to test under simulated time | "test mode only returns…", "simulated time can never trigger a live send" |
 | 5. Edits revoke approval | `revokeApprovalIfApproved()` runs after every edit/swap/reject/add | "edit, swap and reject each revert approved → pending_approval" |
 | 6. Only Shreya's chat + secret | The webhook route checks `X-Telegram-Bot-Api-Secret-Token` (timing-safe) and the chat ID before `handleUpdate` | "wrong secret → 401; wrong chat → ignored" |
-| 7. Cron secret; open dashboard | `cronAuthorized()` on every cron route. The dashboard has no login (owner's choice); `/api/admin/action` ignores simulated time | "cron routes reject…", "dashboard actions are open to everyone … ignore simulated time" |
+| 7. Cron secret; Telegram-only approval | `cronAuthorized()` on every cron route. `/api/admin/action` has no approve or story actions, so the website can't change the draft; it ignores simulated time | "cron routes reject…", "the website is view-only for the draft…" |
 | 8. No secrets leak | Secrets only in `.env.local` (gitignored) and Vercel env. `/api/health` returns names + booleans only. Gitleaks runs before each push | `scripts/e2e.ts` checks health output for secret values; gitleaks output in `docs/evidence/` |
 
 ## State machine (issues.status)

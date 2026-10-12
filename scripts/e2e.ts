@@ -73,6 +73,26 @@ async function main() {
     if (!j.ok) throw new Error(j.message);
     return j.message;
   });
+  await check("the website cannot approve or change the draft (Telegram only)", async () => {
+    for (const action of ["approve", "story_keep", "story_edit", "story_swap", "story_reject"]) {
+      const f = new FormData(); f.set("action", action); f.set("issue_id", "0"); f.set("story_id", "0"); f.set("confirm", "on");
+      const res = await fetch(`${BASE}/api/admin/action`, { method: "POST", body: f, headers: { accept: "application/json" } });
+      if (res.status !== 400) throw new Error(`${action} returned ${res.status}`);
+    }
+  });
+  await check("every article row has a Send to Telegram button", async () => {
+    const html = await (await fetch(`${BASE}/?p=articles`)).text();
+    const count = (needle: string) => html.split(needle).length - 1;
+    const rows = count(`<summary class="g-articles"`), buttons = count("Send to Telegram</button>"), pinned = count("⏭ Pinned") + count("In this issue</span>");
+    if (!rows || buttons + pinned < rows) throw new Error(`${rows} rows, ${buttons} buttons, ${pinned} pinned`);
+    return `${rows} rows, ${buttons} buttons`;
+  });
+  await check("the draft page has no Keep/Edit/Swap/Reject/Confirm buttons", async () => {
+    const html = await (await fetch(`${BASE}/?p=draft`)).text();
+    for (const needle of ["Swap</button>", "Reject</button>", "Keep</button>", "Confirm final draft</button>", "Save commentary"]) {
+      if (html.includes(needle)) throw new Error(`still on the page: ${needle}`);
+    }
+  });
   await check("dashboard actions ignore simulated time (real clock only)", async () => {
     const act = new FormData(); act.set("action", "run_reminder"); act.set("simulated_now", "2026-10-14T22:30");
     const j = (await (await fetch(`${BASE}/api/admin/action`, { method: "POST", body: act, headers: { accept: "application/json" } })).json()) as any;

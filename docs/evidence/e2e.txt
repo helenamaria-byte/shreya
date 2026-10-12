@@ -1,4 +1,4 @@
-E2E against https://the-dispatch-murex.vercel.app at 2026-10-12T16:52:43.646Z
+E2E against https://the-dispatch-murex.vercel.app at 2026-10-12T17:55:25.482Z
 
 PASS  health: DB reachable and env var names present (values never returned) — db ok, 15 env vars present, model gemini-3.8-flash, email mode test
 PASS  GET / → 200
@@ -22,6 +22,9 @@ PASS  telegram webhook without secret → 401
 PASS  resend webhook with bad signature → 401
 PASS  unsubscribe with tampered token → 400
 PASS  open dashboard: an action works without logging in (dry-run email, nothing sent) — Done: Dry run: issue #5 rendered (8 stories); would go to 2 test-mode recipient(s). Nothing sent.
-PASS  dashboard actions ignore simulated time (real clock only) — Skipped: Mon 22:22 IST is before Wed 22:00 (or past the send)
+PASS  the website cannot approve or change the draft (Telegram only)
+PASS  every article row has a Send to Telegram button — 150 rows, 145 buttons
+PASS  the draft page has no Keep/Edit/Swap/Reject/Confirm buttons
+PASS  dashboard actions ignore simulated time (real clock only) — Skipped: Mon 23:25 IST is before Wed 22:00 (or past the send)
 
 All checks passed

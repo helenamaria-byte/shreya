@@ -192,33 +192,12 @@ function DraftPage({ d, admin }: { d: D; admin: boolean }) {
               {s.needs_review && <p><em>Needs review:</em> {s.review_notes}</p>}
               {s.edited_at && s.original_commentary !== s.commentary && <p><em>Gemini's original:</em> “{s.original_commentary}”</p>}
             </details>
-            {admin && (
-              <div className="story-actions">
-                {!s.approved_at && <form method="post" action="/api/admin/action"><input type="hidden" name="action" value="story_keep" /><input type="hidden" name="story_id" value={s.id} /><button className="btn ok" type="submit">✅ Keep</button></form>}
-                <form method="post" action="/api/admin/action"><input type="hidden" name="action" value="story_swap" /><input type="hidden" name="story_id" value={s.id} /><button className="btn" type="submit">🔄 Swap</button></form>
-                <form method="post" action="/api/admin/action"><input type="hidden" name="action" value="story_reject" /><input type="hidden" name="story_id" value={s.id} /><button className="btn danger" type="submit">❌ Reject</button></form>
-                <details>
-                  <summary className="btn">✏️ Edit</summary>
-                  <form method="post" action="/api/admin/action">
-                    <input type="hidden" name="action" value="story_edit" /><input type="hidden" name="story_id" value={s.id} />
-                    <textarea name="commentary" defaultValue={s.commentary ?? ""} />
-                    <button className="btn" type="submit">Save commentary</button>
-                  </form>
-                </details>
-              </div>
-            )}
           </article>
         ))}
       </section>
 
       <section className="below">
-        {admin && ["pending_approval", "skipped"].includes(d.issue!.status) && (
-          <form className="confirm-row" method="post" action="/api/admin/action">
-            <input type="hidden" name="action" value="approve" /><input type="hidden" name="issue_id" value={d.issue!.id} />
-            <label className="small"><input type="checkbox" name="confirm" /> Confirm the final draft of issue #{d.issue!.issue_number} ({d.health.count} stories)</label>
-            <button className="btn" type="submit">Confirm final draft</button>
-          </form>
-        )}
+        <p className="note">This page is for viewing. Shreya keeps, edits, swaps, rejects and confirms stories in Telegram.</p>
         <details className="nested">
           <summary>Approval history ({d.events.length} events)</summary>
           <div className="inner"><Timeline d={d} /></div>
@@ -321,7 +300,7 @@ function ArticlesPage({ d, sp, admin }: { d: D; sp: SP; admin: boolean }) {
         </div>
       </div>
       <div className="rows" style={{ marginTop: 14 }}>
-        <div className="head g-articles"><span>Headline</span><span>Source</span><span>Topic</span><span>Published</span><span>Status</span></div>
+        <div className="head g-articles"><span>Headline</span><span>Source</span><span>Topic</span><span>Published</span><span>Status</span><span /></div>
         {d.articles.map((a) => {
           const st = articleStatus(a);
           return (
@@ -332,6 +311,11 @@ function ArticlesPage({ d, sp, admin }: { d: D; sp: SP; admin: boolean }) {
                 <span><span className="ttag" style={tc(a.topic)}>{a.topic ?? "untagged"}</span></span>
                 <span className="muted small">{a.published_at ? formatIst(a.published_at, { weekday: undefined, hour: undefined, minute: undefined }) : "—"}</span>
                 <Status dot={st.dot} text={st.label} />
+                <span>{a.draft_state === "selected"
+                  ? <span className="muted small">In this issue</span>
+                  : a.pinned_at
+                  ? <span className="badge ok" title="Saved by Shreya for the next issue">⏭ Pinned</span>
+                  : <button className="btn tg" type="submit" form={`tg-${a.id}`} title="Push to Shreya's Telegram: add to this week's draft or save for the next issue">📨 Send to Telegram</button>}</span>
               </summary>
               <div className="detail">
                 {a.summary && <p>{a.summary}</p>}
@@ -341,13 +325,10 @@ function ArticlesPage({ d, sp, admin }: { d: D; sp: SP; admin: boolean }) {
                   <dt>Topic</dt><dd>{a.topic ?? "—"} {a.topic_method && <span className="muted">({a.topic_method}{a.topic_confidence != null ? `, ${Math.round(a.topic_confidence * 100)}%` : ""})</span>}</dd>
                   <dt>Fetched</dt><dd>{formatIst(a.fetched_at)}</dd>
                 </dl>
-                {admin ? (
-                  <form className="row-actions" method="post" action="/api/admin/action">
-                    <input type="hidden" name="action" value="article_to_telegram" /><input type="hidden" name="article_id" value={a.id} />
-                    <button className="btn" type="submit">📨 Send to Telegram</button>
-                    <span className="small muted">Shreya gets it with a ➕ Add to draft button.</span>
-                  </form>
-                ) : null}
+                <form id={`tg-${a.id}`} method="post" action="/api/admin/action">
+                  <input type="hidden" name="action" value="article_to_telegram" /><input type="hidden" name="article_id" value={a.id} />
+                </form>
+                <p className="small muted">“Send to Telegram” pushes this article to Shreya with two choices: ➕ add it to this week's draft, or ⏭ save it for the next issue.</p>
               </div>
             </details>
           );
@@ -521,6 +502,7 @@ function filterHref(sp: SP, change: Partial<SP>) {
 }
 
 function articleStatus(a: any): { label: string; dot: Dot; why: string } {
+  if (a.pinned_at && a.draft_state !== "selected") return { label: "Pinned", dot: "amber", why: "Shreya saved it from Telegram for the next issue; Gemini must include it when it drafts." };
   if (a.draft_state === "selected") return { label: "In draft", dot: "green", why: "Selected by Gemini for this week's draft." };
   if (a.duplicate_reason === "covered_in_past_issue")
     return { label: "Covered before", dot: "grey", why: `Matches “${a.duplicate_title}”${a.duplicate_issue ? ` from issue #${a.duplicate_issue}` : ""}${a.duplicate_is_sample ? " (sample data)" : ""} — ${a.duplicate_score >= 0.999 ? "same link" : `title similarity ${Number(a.duplicate_score).toFixed(2)}`}. Excluded from candidates.` };

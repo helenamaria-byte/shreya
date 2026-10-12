@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { approveIssue, approveStory, editCommentary, IssueError, rejectStory, swapStory } from "@/lib/issues";
+import { IssueError } from "@/lib/issues";
 import { runDraft, runDryRunEmail, runIngest, runReminder, runReport, runSend, type JobResult } from "@/lib/jobs";
 import { importSubscribersCsv } from "@/lib/subscribers";
 import { learnVoice } from "@/lib/voice";
@@ -10,8 +10,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 /**
- * Every dashboard write goes through here. By the owner's choice the dashboard is open:
- * anyone on the site can make changes. Jobs here always run on the real clock — simulated
+ * Dashboard actions. The dashboard is for viewing: reviewing, editing and approving the draft
+ * happen only in Telegram (Shreya's chat). From the website you can send an article to
+ * Telegram, learn/edit the voice guide, import subscribers and run a dry-run render. Jobs here always run on the real clock — simulated
  * time is only available from scripts/run-job.ts and the tests.
  */
 export async function POST(req: Request) {
@@ -37,13 +38,8 @@ export async function POST(req: Request) {
       case "article_to_telegram": {
         const { sendArticle } = await import("@/lib/telegram");
         await sendArticle(Number(form.get("article_id")));
-        message = "Sent to Telegram — tap ➕ Add to draft there to add it to this week's issue.";
+        message = "Sent to Telegram — Shreya can ➕ add it to this week's draft or ⏭ save it for the next issue.";
         anchor = "articles"; break;
-      }
-      case "story_keep": {
-        const r = await approveStory(Number(form.get("story_id")), "dashboard");
-        message = r.already ? "Story was already approved." : `Story ${r.story.position} approved — ${r.health.approved} of ${r.health.count} stories approved.`;
-        anchor = "draft"; break;
       }
       case "voice_learn": {
         const v = await learnVoice(String(form.get("samples") ?? ""));
@@ -56,27 +52,6 @@ export async function POST(req: Request) {
         const r = await importSubscribersCsv(text);
         message = `Imported ${r.added} new subscriber(s) from ${r.rows} row(s); ${r.alreadyListed} already listed (left unchanged), ${r.invalid} invalid${r.invalidExamples.length ? ` (e.g. ${r.invalidExamples.join(", ")})` : ""}.`;
         anchor = "subscribers"; break;
-      }
-      case "story_edit": {
-        const r = await editCommentary(Number(form.get("story_id")), String(form.get("commentary") ?? ""), "dashboard");
-        message = `Story ${r.story.position} updated.${r.revoked ? " Approval was revoked — re-approve required." : ""}`;
-        anchor = "draft"; break;
-      }
-      case "story_swap": {
-        const r = await swapStory(Number(form.get("story_id")), "dashboard");
-        message = `Swapped in “${r.newStory.title}” (${r.via}).${r.revoked ? " Approval was revoked — re-approve required." : ""}`;
-        anchor = "draft"; break;
-      }
-      case "story_reject": {
-        const r = await rejectStory(Number(form.get("story_id")), "dashboard");
-        message = `Story removed.${r.replacement ? ` “${r.replacement.title}” came in from the reserves to keep 8 stories.` : ""} ${r.health.count} stories, ${r.health.topics.length} topics${r.health.warnings.length ? ` — ${r.health.warnings.join("; ")}; swap a story in before confirming` : ""}.${r.revoked ? " Approval was revoked." : ""}`;
-        anchor = "draft"; break;
-      }
-      case "approve": {
-        if (form.get("confirm") !== "on") { message = "Tick the confirmation box to approve."; anchor = "draft"; break; }
-        const r = await approveIssue(Number(form.get("issue_id")), "dashboard", at);
-        message = r.message + (r.warnings.length ? ` Warnings: ${r.warnings.join("; ")}.` : "");
-        anchor = "approval"; break;
       }
       case "voice_save": {
         const content = String(form.get("content") ?? "").trim();

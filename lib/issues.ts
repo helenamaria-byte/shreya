@@ -1,6 +1,6 @@
 import { query, sql } from "./db";
 import { candidates, checkCommentary, geminiReplacement, latestVoiceGuide, MAX_STORIES, MIN_STORIES, MIN_TOPICS, writeCommentary, type Candidate } from "./editorial";
-import { istDate, istParts, SEND_AT, weekDate } from "./time";
+import { istDate, istParts, SEND_AT, weekDate, weekKey } from "./time";
 import { distinctTopics } from "./topics";
 
 export type Issue = {
@@ -211,7 +211,7 @@ export async function addArticleToDraft(articleId: number, channel: Channel) {
   const art = (await sql`SELECT id, title, source_name, topic, summary, published_at, url, issue_week, is_sample FROM articles WHERE id = ${articleId}`)[0] as (Candidate & { issue_week: string; is_sample: boolean }) | undefined;
   if (!art || art.is_sample) throw new IssueError("That article can't be added.");
   const issue = await getIssueByWeek(art.issue_week);
-  if (!issue || !EDITABLE.includes(issue.status)) throw new IssueError(issue ? `Issue #${issue.issue_number} is ${issue.status.replace(/_/g, " ")}; edits are closed.` : "There's no draft for that week yet.");
+  if (!issue || !EDITABLE.includes(issue.status) || issue.status === "skipped") throw new IssueError(issue ? `Issue #${issue.issue_number} is ${issue.status.replace(/_/g, " ")}, so it can't take new stories — use ⏭ Save for next issue.` : "There's no draft yet this week — use ⏭ Save for next issue and it will be included when Gemini drafts.");
   const current = await getStories(issue.id);
   if (current.some((s) => s.article_id === articleId)) throw new IssueError("That article is already in the draft.");
   if (current.length >= MAX_STORIES) throw new IssueError(`The draft already has ${MAX_STORIES} stories, the maximum. Reject or swap one first.`);
@@ -234,6 +234,22 @@ export async function addArticleToDraft(articleId: number, channel: Channel) {
   await logEvent(issue.id, "story_added", channel, `Shreya added: ${art.title}`);
   const revoked = await revokeApprovalIfApproved(issue.id, channel, "Story added");
   return { story: (await getStory(storyId))!, revoked, health: draftHealth(await getStories(issue.id)) };
+}
+
+/**
+ * "⏭ Save for next issue" (Telegram): pin the article for the next draft that hasn't been
+ * written yet — this week's if Gemini hasn't drafted it, otherwise next week's.
+ */
+export async function saveForNextIssue(articleId: number, channel: Channel, at: Date = new Date()) {
+  const art = (await sql`SELECT id, title, is_sample FROM articles WHERE id = ${articleId}`)[0];
+  if (!art || art.is_sample) throw new IssueError("That article can't be saved.");
+  const thisWeek = weekKey(at);
+  const issue = await getIssueByWeek(thisWeek);
+  const stillOpen = istParts(at).weekday <= 3 && (!issue || ["collecting", "insufficient_stories"].includes(issue.status));
+  const target = stillOpen ? thisWeek : weekKey(new Date(at.getTime() + 7 * 86400000));
+  await sql`UPDATE articles SET pinned_at = ${at.toISOString()}, issue_week = ${target} WHERE id = ${articleId}`;
+  if (issue) await logEvent(issue.id, "story_pinned", channel, `Saved for ${target === thisWeek ? "this week's" : "next week's"} issue: ${art.title}`);
+  return { title: art.title as string, targetWeek: target, thisWeek: target === thisWeek };
 }
 
 export type ApproveResult = { ok: boolean; message: string; offerSendNow: boolean; warnings: string[] };

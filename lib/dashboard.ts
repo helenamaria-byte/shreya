@@ -45,7 +45,7 @@ export async function loadDashboard(opts: { articleTopic?: string; articleStatus
   if (opts.articleTopic) { params.push(opts.articleTopic); where.push(`a.topic = $${params.length}`); }
   if (opts.articleStatus && statusFilter[opts.articleStatus]) where.push(statusFilter[opts.articleStatus]);
   const articles = await query(
-    `SELECT a.id, a.title, a.url, a.source_name, a.topic, a.topic_confidence, a.topic_method, a.summary, a.published_at, a.fetched_at,
+    `SELECT a.id, a.title, a.url, a.source_name, a.topic, a.topic_confidence, a.topic_method, a.summary, a.published_at, a.fetched_at, a.pinned_at,
             a.duplicate_reason, a.duplicate_score, o.title AS duplicate_title, o.is_sample AS duplicate_is_sample,
             (SELECT i.issue_number FROM issue_stories s JOIN issues i ON i.id = s.issue_id WHERE s.article_id = o.id AND s.state = 'selected' LIMIT 1) AS duplicate_issue,
             (SELECT s.state FROM issue_stories s WHERE s.article_id = a.id AND s.issue_id = $${params.length + 1}) AS draft_state
