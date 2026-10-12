@@ -1,0 +1,46 @@
+{
+  "name": "the-dispatch-newsletter-engine",
+  "version": "1.0.0",
+  "description": "The Dispatch — newsletter intelligence engine (assignment prototype)",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "test": "vitest run",
+    "e2e": "tsx scripts/e2e.ts",
+    "screenshots": "tsx scripts/screenshots.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@google/genai": "^2.28.0",
+    "@neondatabase/serverless": "^1.2.0",
+    "date-fns-tz": "^3.2.0",
+    "next": "^16.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "resend": "^6.32.1",
+    "rss-parser": "^3.13.0",
+    "svix": "^2.8.0"
+  },
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^12.0.0",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "playwright": "^1.64.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.4"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}

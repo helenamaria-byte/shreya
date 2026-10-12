@@ -1,0 +1,29 @@
+flowchart TD
+  A(["Mon–Wed ~7 AM IST: ingest cron"]) --> B["Fetch RSS / Google News / GNews<br/>(per-source timeout; a failed feed is logged, run continues)"]
+  B --> C["Normalise URLs, insert with ON CONFLICT DO NOTHING"]
+  C --> D{"Story in the last<br/>four sent issues?"}
+  D -- "yes (same link or similar title)" --> D1["Mark covered_in_past_issue<br/>→ excluded"]
+  D -- no --> E{"Duplicate this week?<br/>(same URL / title similarity > 0.5)"}
+  E -- yes --> E1["Mark duplicate_of → excluded"]
+  E -- no --> F["Gemini Flash tags topic<br/>(keyword fallback)"]
+  F --> G(["Wed 3 PM IST: draft cron"])
+  G --> H{"Enough suitable stories?<br/>(≥12 candidates, ≥3 topics)"}
+  H -- no --> H1["Status insufficient_stories<br/>Telegram: what's available + 'Draft anyway'"]
+  H1 -- "Draft anyway" --> I
+  H -- yes --> I["Gemini selects 8–10 stories + 5 reserves<br/>code validates; retry once; deterministic repair"]
+  I --> J["Gemini writes 2–3 sentence commentary<br/>numbers not in source → needs_review"]
+  J --> K["Status pending_approval<br/>draft cards sent to Telegram"]
+  K --> L["Shreya edits / swaps / rejects in Telegram<br/>(any edit after approval revokes it)"]
+  L --> M{"Approved (with confirmation)?"}
+  M -- yes --> N["Status approved, time + channel stored"]
+  M -- "not yet" --> P{"Still pending at<br/>Wed 10 PM?"}
+  P -- "yes, no reminder sent yet" --> P1["Send one Telegram reminder<br/>(reminder_sent_at set atomically)"] --> M
+  P -- no --> M
+  N --> Q(["Thu 8 AM IST: send cron"])
+  M -- "no, by Thursday" --> Q
+  Q --> R{"Approval recorded before<br/>the Thursday send?"}
+  R -- no --> R1["Send nothing → status skipped<br/>Telegram notice; late approval on Thursday → 'Send now' with confirmation"]
+  R -- yes --> S{"Duplicate-send guard:<br/>UPDATE … SET status='sending'<br/>WHERE status='approved' AND sent_at IS NULL"}
+  S -- "no row claimed" --> S1["Send nothing (already sent / not approved)"]
+  S -- "claimed" --> T["Deliveries UNIQUE(issue, subscriber) inserted first<br/>Resend batch with idempotency key<br/>active subscribers only; test mode → test addresses"]
+  T --> U["Status sent · Resend webhooks update bounces, complaints"]
