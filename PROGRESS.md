@@ -17,4 +17,4 @@
 - gh is at `C:\Program Files\GitHub CLI\gh.exe`; gitleaks is under `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Gitleaks.Gitleaks_*\gitleaks.exe` (new shells pick both up on PATH).
 
 ## Blocked — needs user
-- (none yet)
+- GitHub: the fine-grained token cannot create repositories (`Resource not accessible by personal access token` on POST /user/repos and GraphQL createRepository). Needs a token with Repository access = All repositories and Administration: Read and write + Contents: Read and write. Code is committed locally and ready to push.

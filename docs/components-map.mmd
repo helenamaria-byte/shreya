@@ -1,4 +1,4 @@
-flowchart LR
+flowchart TB
   GH["GitHub<br/><i>source code repo</i>"] -- "deploys (vercel --prod)" --> V["Vercel<br/><i>Next.js app, API routes, dashboard</i>"]
   V -- "schedules" --> CRON["Vercel Cron<br/><i>Mon–Wed ingest · Wed draft · Wed reminder · Thu send</i>"]
   CRON -- "triggers /api/cron/ingest" --> SRC["RSS feeds + Google News RSS + GNews API<br/><i>live Indian startup & tech news</i>"]

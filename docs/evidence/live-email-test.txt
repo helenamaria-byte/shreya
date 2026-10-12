@@ -1,0 +1,25 @@
+test issue id=8 (TEST-SEND-1) approved; recipients (test mode): [
+  'he•••@pg27.mesaschool.co',
+  'de•••@resend.dev',
+  'bo•••@resend.dev',
+  'co•••@resend.dev'
+]
+first send: {
+  claimed: true,
+  reason: 'sent',
+  mode: 'test',
+  attempted: 4,
+  sent: 4,
+  failed: 0,
+  skippedAlreadySent: 0,
+  note: undefined
+}
+second send (must not claim): {
+  claimed: false,
+  reason: 'issue status is sent (already sent), not approved',
+  attempted: 0,
+  sent: 0,
+  failed: 0,
+  skippedAlreadySent: 0
+}
+t+10s he•••@pg27.mesaschool.co: delivery=delivered subscriber=active | de•••@resend.dev: delivery=delivered subscriber=active | bo•••@resend.dev: delivery=bounced subscriber=bounced | co•••@resend.dev: delivery=complained subscriber=complained

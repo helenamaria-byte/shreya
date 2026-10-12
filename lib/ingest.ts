@@ -160,11 +160,12 @@ export async function tagWeek(week: string) {
 }
 
 export async function syncSources(extra: SourceDef[] = []) {
-  const all = [...SOURCES, ...extra];
+  // Extra (test) sources are stored inactive so they only run when explicitly requested.
+  const all = [...SOURCES.map((s) => ({ ...s, active: true })), ...extra.map((s) => ({ ...s, active: false }))];
   await query(
-    `INSERT INTO sources (name, type, url_or_query) SELECT * FROM unnest($1::text[], $2::text[], $3::text[])
-     ON CONFLICT (name) DO UPDATE SET type = EXCLUDED.type, url_or_query = EXCLUDED.url_or_query`,
-    [all.map((s) => s.name), all.map((s) => s.type), all.map((s) => s.url_or_query)],
+    `INSERT INTO sources (name, type, url_or_query, active) SELECT * FROM unnest($1::text[], $2::text[], $3::text[], $4::boolean[])
+     ON CONFLICT (name) DO UPDATE SET type = EXCLUDED.type, url_or_query = EXCLUDED.url_or_query, active = EXCLUDED.active`,
+    [all.map((s) => s.name), all.map((s) => s.type), all.map((s) => s.url_or_query), all.map((s) => s.active)],
   );
   const names = all.map((s) => s.name);
   return query(`SELECT * FROM sources WHERE name = ANY($1) AND (active OR name = ANY($2)) ORDER BY id`, [names, extra.map((s) => s.name)]);

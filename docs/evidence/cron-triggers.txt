@@ -1,0 +1,12 @@
+== GET /api/cron/ingest (with secret)
+success - 45 new articles from 24/25 sources · 6 duplicates · 0 covered before · 1 feed(s) failed
+== GET /api/cron/draft (with secret)
+skipped - Skipped: Mon 16:39 IST is not Wed after 15:00
+== GET /api/cron/reminder (with secret)
+skipped - Skipped: Mon 16:39 IST is before Wed 22:00 (or past the send)
+== GET /api/cron/send (with secret)
+skipped - Skipped: Mon 16:39 IST is not Thursday after 08:00
+== GET /api/cron/send (no secret)
+401
+== wrong secret
+401

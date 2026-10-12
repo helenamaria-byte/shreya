@@ -94,10 +94,10 @@ textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
 
 /* Sections */
 .section { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 10px; }
-.section > summary { list-style: none; cursor: pointer; padding: 14px 18px; display: flex; gap: 12px; align-items: baseline; justify-content: space-between; }
+.section > summary { list-style: none; cursor: pointer; padding: 14px 18px; display: flex; gap: 12px; align-items: baseline; }
 .section > summary::-webkit-details-marker { display: none; }
 .section > summary h2 { font-size: 16px; font-weight: 600; }
-.section > summary .sum { color: var(--muted); font-size: 13.5px; text-align: right; }
+.section > summary .sum { color: var(--muted); font-size: 13.5px; text-align: right; margin-left: auto; }
 .section > summary::after { content: "▸"; color: var(--faint); margin-left: 4px; transition: transform .15s; }
 .section[open] > summary::after { transform: rotate(90deg); }
 .section-body { padding: 0 18px 18px; display: grid; gap: 14px; }
@@ -152,7 +152,7 @@ pre.json { background: var(--soft); border-radius: 8px; padding: 10px; overflow:
 .guide blockquote { margin: 0 0 10px; padding: 8px 12px; background: #fef3c7; color: #92400e; border-radius: 6px; }
 .note { font-size: 13px; color: var(--muted); background: var(--soft); border-radius: 8px; padding: 8px 12px; }
 iframe.preview { width: 100%; height: 640px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
-.diagram { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 8px; }
+.diagram { display: block; margin: 0 auto; width: auto; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 8px; }
 .footer { color: var(--faint); font-size: 12.5px; text-align: center; margin-top: 28px; }
 
 @media (max-width: 720px) {
@@ -164,7 +164,7 @@ iframe.preview { width: 100%; height: 640px; border: 1px solid var(--line); bord
   .cards { grid-template-columns: 1fr 1fr; }
   .next { flex-direction: column; align-items: flex-start; }
   .section > summary { flex-direction: column; gap: 2px; padding: 12px 14px; }
-  .section > summary .sum { text-align: left; }
+  .section > summary .sum { text-align: left; margin-left: 0; }
   .section > summary::after { display: none; }
   .section-body { padding: 0 12px 14px; }
   .g-articles { grid-template-columns: minmax(0, 1fr) 96px; }

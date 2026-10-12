@@ -1,0 +1,172 @@
+{
+  "id": 4,
+  "started_at": "2026-10-12T11:09:14.600Z",
+  "summary": "45 new articles from 24/25 sources · 6 duplicates · 0 covered before · 1 feed(s) failed",
+  "details": {
+    "week": "2026-W42",
+    "dedup": {
+      "sameUrl": 0,
+      "pastIssue": 0,
+      "similarTitle": 6
+    },
+    "tagging": {
+      "tagged": 39,
+      "fallback": false,
+      "geminiCalls": 1
+    },
+    "inserted": 45,
+    "perSource": [
+      {
+        "name": "Business Standard Technology",
+        "status": "ok",
+        "fetched": 30,
+        "inserted": 1
+      },
+      {
+        "name": "Business Today Tech",
+        "status": "ok",
+        "fetched": 30,
+        "inserted": 1
+      },
+      {
+        "name": "BusinessLine Info-Tech",
+        "status": "ok",
+        "fetched": 30,
+        "inserted": 0
+      },
+      {
+        "name": "Entrackr",
+        "status": "ok",
+        "fetched": 24,
+        "inserted": 0
+      },
+      {
+        "name": "ET Markets IPOs",
+        "status": "ok",
+        "fetched": 12,
+        "inserted": 0
+      },
+      {
+        "name": "ET Startups",
+        "status": "ok",
+        "fetched": 6,
+        "inserted": 0
+      },
+      {
+        "name": "ET Tech",
+        "status": "ok",
+        "fetched": 30,
+        "inserted": 0
+      },
+      {
+        "name": "GNews: AI startups",
+        "status": "ok",
+        "fetched": 10,
+        "inserted": 6
+      },
+      {
+        "name": "GNews: climate & EV",
+        "status": "ok",
+        "fetched": 10,
+        "inserted": 10
+      },
+      {
+        "name": "GNews: fintech",
+        "status": "ok",
+        "fetched": 10,
+        "inserted": 7
+      },
+      {
+        "name": "GNews: IPOs",
+        "status": "ok",
+        "fetched": 0,
+        "inserted": 0
+      },
+      {
+        "name": "GNews: layoffs & talent",
+        "status": "ok",
+        "fetched": 10,
+        "inserted": 9
+      },
+      {
+        "name": "GNews: startup funding",
+        "status": "ok",
+        "fetched": 10,
+        "inserted": 10
+      },
+      {
+        "name": "Google News: AI startups",
+        "status": "ok",
+        "fetched": 14,
+        "inserted": 0
+      },
+      {
+        "name": "Google News: quick commerce & D2C",
+        "status": "ok",
+        "fetched": 11,
+        "inserted": 0
+      },
+      {
+        "name": "Google News: startup funding",
+        "status": "ok",
+        "fetched": 14,
+        "inserted": 0
+      },
+      {
+        "name": "Google News: startup policy",
+        "status": "ok",
+        "fetched": 11,
+        "inserted": 0
+      },
+      {
+        "name": "Inc42",
+        "status": "ok",
+        "fetched": 24,
+        "inserted": 0
+      },
+      {
+        "name": "Indian Express Tech",
+        "status": "ok",
+        "fetched": 29,
+        "inserted": 1
+      },
+      {
+        "name": "MediaNama",
+        "error": "HTTP 403",
+        "status": "failed",
+        "fetched": 0,
+        "inserted": 0
+      },
+      {
+        "name": "Mint Companies",
+        "status": "ok",
+        "fetched": 30,
+        "inserted": 0
+      },
+      {
+        "name": "Mint Technology",
+        "status": "ok",
+        "fetched": 28,
+        "inserted": 0
+      },
+      {
+        "name": "TechCrunch India",
+        "status": "ok",
+        "fetched": 0,
+        "inserted": 0
+      },
+      {
+        "name": "The Hindu Business",
+        "status": "ok",
+        "fetched": 30,
+        "inserted": 0
+      },
+      {
+        "name": "YourStory",
+        "status": "ok",
+        "fetched": 20,
+        "inserted": 0
+      }
+    ]
+  }
+}
