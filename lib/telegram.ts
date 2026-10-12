@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { sql } from "./db";
 import { sendIssue } from "./email";
 import {
-  addReplacement, approveIssue, approveStory, draftHealth, editCommentary, getIssue, getIssueByWeek, getStories, getStory, IssueError,
+  addArticleToDraft, addReplacement, approveIssue, approveStory, draftHealth, editCommentary, getIssue, getIssueByWeek, getStories, getStory, IssueError,
   logEvent, rejectIssue, rejectStory, swapStory, type Issue, type Story,
 } from "./issues";
 import { formatIst, now, weekKey } from "./time";
@@ -91,6 +91,20 @@ export async function sendDraft(issueId: number) {
   await send(`<b>Ready?</b> When you're happy with every story, confirm the final draft of issue #${issue.issue_number}. It goes out Thursday at 8 AM IST, only after you confirm.`, footerKeyboard(issueId));
   await sql`UPDATE issues SET draft_sent_to_telegram_at = now() WHERE id = ${issueId}`;
   await logEvent(issueId, "draft_sent", "telegram", `${stories.length} story cards sent to Telegram`);
+}
+
+/** "Send to Telegram" from the Articles page: one article card with ➕ Add to draft. */
+export async function sendArticle(articleId: number) {
+  const a = (await sql`SELECT id, title, url, source_name, topic, summary, published_at, duplicate_reason FROM articles WHERE id = ${articleId}`)[0];
+  if (!a) throw new IssueError("Article not found.");
+  const text = [
+    `📰 <b>From the Articles page</b>`,
+    `<b><a href="${esc(a.url)}">${esc(a.title)}</a></b>`,
+    `<i>${esc(a.source_name)} · ${esc(a.topic ?? "untagged")}${a.published_at ? ` · ${formatIst(a.published_at, { hour: undefined, minute: undefined })}` : ""}</i>`,
+    a.summary ? `\n${esc(String(a.summary).slice(0, 600))}` : "",
+    a.duplicate_reason ? `\n⚠️ Marked as ${String(a.duplicate_reason).replace(/_/g, " ")}.` : "",
+  ].filter(Boolean).join("\n");
+  await send(text, [[{ text: "➕ Add to draft", callback_data: `ad:${a.id}` }]]);
 }
 
 // ---------------------------------------------------------------------------
@@ -217,6 +231,13 @@ async function handleCallback(cb: any, at: Date): Promise<string> {
           reply_markup: { force_reply: true, input_field_placeholder: "New 2–3 sentence commentary" },
         });
         return "edit: awaiting reply";
+      }
+      case "ad": {
+        await answer(cb.id, "Adding…");
+        const r = await addArticleToDraft(id, "telegram");
+        await send(`➕ Added as story ${r.story.position} — ${r.health.count} stories across ${r.health.topics.length} topics. Gemini wrote this commentary; keep it or edit it:\n\n${storyText(r.story)}`, storyKeyboard(r.story));
+        await revokedNote(r.revoked);
+        return "article added to draft";
       }
       case "k": {
         const r = await approveStory(id, "telegram");

@@ -115,6 +115,7 @@ The original "collapsible sections" criterion was the author's own suggestion, n
 | I2 | Graceful soft bounces + delivery report | ✅ | soft bounces counted (3 → suppressed), Thursday 6 PM Telegram report, front-page unsubscribes & bounces card, Subscribers page | tests "a temporary bounce is counted, not suppressed…", "waits until Thu 18:00, reports once…" |
 | I3 | Documented voice learned from her writing | ✅ | Editorial voice → Learn my voice (`lib/voice.ts`) | tests "asks Gemini to document the voice … next draft uses it", "refuses samples that are too short" |
 | I4 | Import the 2,200-subscriber list | ✅ | Subscribers → Import (CSV) (`lib/subscribers.ts`) | tests "adds valid new rows … never re-activates suppressed people", "header-less one-column list" |
+| I6 | Shreya can add a story herself | ✅ | Articles → 📨 Send to Telegram → ➕ Add to draft (`addArticleToDraft`, `sendArticle`) | tests "sends the article card with an Add to draft button", "➕ adds it as the next story…", "refuses beyond 10 stories…"; `screenshots/03b-articles-send-to-telegram.png` |
 | I5 | Show the time saved vs 4 h/week | ✅ | front-page card: review time vs ~4 h by hand | `screenshots/01-front-page.png` |
 
 ## Score summary

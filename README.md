@@ -26,6 +26,7 @@ A weekly newsletter about the Indian startup and tech ecosystem, run almost hand
 | Reminder if no confirmation by Wednesday 10 PM | cron `30 16 * * 3` → fires 22:00–22:59 IST, once, only while still pending |
 | Unsubscribes and bounces from Gmail handled gracefully | Gmail one-click `List-Unsubscribe` + signed footer link. Hard bounces and spam complaints suppressed via signed Resend webhooks. Soft bounces are counted and only suppress after 3 in a row. Thursday-evening delivery report to Telegram. Front-page card for unsubscribes & bounces |
 | 2,200 subscribers | CSV import (admin) that never re-activates a suppressed address |
+| Her editorial judgment stays hers | Articles page → **📨 Send to Telegram** on any article → **➕ Add to draft** there: Gemini writes its commentary and it joins the draft (max 10, unapproved) |
 | "It takes her four hours every week" | front-page card: time from draft to her confirmation vs ~4 h by hand |
 
 ## Architecture

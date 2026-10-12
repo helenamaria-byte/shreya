@@ -1,5 +1,5 @@
 import { query, sql } from "./db";
-import { candidates, checkCommentary, geminiReplacement, latestVoiceGuide, MAX_STORIES, MIN_STORIES, MIN_TOPICS } from "./editorial";
+import { candidates, checkCommentary, geminiReplacement, latestVoiceGuide, MAX_STORIES, MIN_STORIES, MIN_TOPICS, writeCommentary, type Candidate } from "./editorial";
 import { istDate, istParts, SEND_AT, weekDate } from "./time";
 import { distinctTopics } from "./topics";
 
@@ -200,6 +200,40 @@ export async function addReplacement(issueId: number, channel: Channel) {
   await logEvent(issueId, "story_added", channel, `Replacement added (${via})`);
   const revoked = await revokeApprovalIfApproved(issueId, channel, "Story added");
   return { newStory: (await getStory(id))!, via, revoked };
+}
+
+/**
+ * Shreya picks an article herself (Articles page → Telegram → ➕ Add to draft).
+ * Gemini writes its commentary in the voice guide; it joins the draft unapproved,
+ * never beyond 10 stories, and any existing approval is revoked.
+ */
+export async function addArticleToDraft(articleId: number, channel: Channel) {
+  const art = (await sql`SELECT id, title, source_name, topic, summary, published_at, url, issue_week, is_sample FROM articles WHERE id = ${articleId}`)[0] as (Candidate & { issue_week: string; is_sample: boolean }) | undefined;
+  if (!art || art.is_sample) throw new IssueError("That article can't be added.");
+  const issue = await getIssueByWeek(art.issue_week);
+  if (!issue || !EDITABLE.includes(issue.status)) throw new IssueError(issue ? `Issue #${issue.issue_number} is ${issue.status.replace(/_/g, " ")}; edits are closed.` : "There's no draft for that week yet.");
+  const current = await getStories(issue.id);
+  if (current.some((s) => s.article_id === articleId)) throw new IssueError("That article is already in the draft.");
+  if (current.length >= MAX_STORIES) throw new IssueError(`The draft already has ${MAX_STORIES} stories, the maximum. Reject or swap one first.`);
+  const position = current.length + 1;
+  const existing = (await sql`SELECT id FROM issue_stories WHERE issue_id = ${issue.id} AND article_id = ${articleId}`)[0];
+  let storyId: number;
+  if (existing) {
+    // A reserve, or a story removed earlier: bring it back (its commentary already exists).
+    await sql`UPDATE issue_stories SET state = 'selected', position = ${position}, reserve_rank = NULL, approved_at = NULL WHERE id = ${existing.id}`;
+    storyId = existing.id;
+  } else {
+    const voice = (await latestVoiceGuide())?.content ?? "";
+    const text = (await writeCommentary([art], voice)).get(art.id) ?? "";
+    const check = text ? checkCommentary(text, `${art.title} ${art.summary ?? ""}`) : { commentary: "", needsReview: true, notes: ["Gemini returned no commentary"] };
+    const ins = await sql`INSERT INTO issue_stories (issue_id, article_id, position, commentary, original_commentary, state, gemini_rationale, needs_review, review_notes)
+                          VALUES (${issue.id}, ${art.id}, ${position}, ${check.commentary}, ${check.commentary}, 'selected', 'Added by Shreya from the Articles page',
+                                  ${check.needsReview}, ${check.notes.join("; ") || null}) RETURNING id`;
+    storyId = ins[0].id;
+  }
+  await logEvent(issue.id, "story_added", channel, `Shreya added: ${art.title}`);
+  const revoked = await revokeApprovalIfApproved(issue.id, channel, "Story added");
+  return { story: (await getStory(storyId))!, revoked, health: draftHealth(await getStories(issue.id)) };
 }
 
 export type ApproveResult = { ok: boolean; message: string; offerSendNow: boolean; warnings: string[] };

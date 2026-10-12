@@ -43,6 +43,12 @@ export async function POST(req: Request) {
       case "run_send": run = await runSend({ ...common, channel: "dashboard" }); break;
       case "dry_run_email": run = await runDryRunEmail(common); break;
       case "run_report": run = await runReport(common); break;
+      case "article_to_telegram": {
+        const { sendArticle } = await import("@/lib/telegram");
+        await sendArticle(Number(form.get("article_id")));
+        message = "Sent to Telegram — tap ➕ Add to draft there to add it to this week's issue.";
+        anchor = "articles"; break;
+      }
       case "story_keep": {
         const r = await approveStory(Number(form.get("story_id")), "dashboard");
         message = r.already ? "Story was already approved." : `Story ${r.story.position} approved — ${r.health.approved} of ${r.health.count} stories approved.`;
@@ -107,7 +113,7 @@ function reply(req: Request, json: boolean, ok: boolean, message: string, anchor
   url.searchParams.set("msg", message.slice(0, 400));
   if (!ok) url.searchParams.set("err", "1");
   if (run) url.searchParams.set("run", String(run.runId));
-  const page = ({ draft: "draft", approval: "draft", voice: "voice", subscribers: "subscribers" } as Record<string, string>)[anchor];
+  const page = ({ draft: "draft", approval: "draft", voice: "voice", subscribers: "subscribers", articles: "articles" } as Record<string, string>)[anchor];
   if (page) url.searchParams.set("p", page);
   return NextResponse.redirect(url, 303);
 }

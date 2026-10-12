@@ -172,3 +172,44 @@ describe("subscriber CSV import (the real 2,200-person list)", () => {
     expect(r.added).toBe(2);
   });
 });
+
+describe("Articles page → Send to Telegram → ➕ Add to draft", () => {
+  beforeEach(resetDb);
+
+  it("sends the article card with an Add to draft button", async () => {
+    await makeDraft({ n: 8 });
+    const id = await addArticle("Hand-picked story about Indian SaaS exports", { topic: "AI & Deeptech", summary: "SaaS exports grew." });
+    const { sendArticle } = await import("../lib/telegram");
+    await sendArticle(id);
+    const msg = calls.telegram.find((c) => c.method === "sendMessage");
+    expect(msg?.body.text).toMatch(/Hand-picked story about Indian SaaS exports/);
+    expect(JSON.stringify(msg?.body.reply_markup)).toContain(`ad:${id}`);
+  });
+
+  it("➕ adds it as the next story with Gemini commentary, unapproved, and revokes an approval", async () => {
+    const issue = await makeDraft({ n: 8, status: "approved" });
+    const id = await addArticle("Hand-picked story about Indian SaaS exports", { topic: "AI & Deeptech", summary: "SaaS exports grew." });
+    calls.geminiResponder = () => ({ items: [{ article_id: id, commentary: "Exports are the quiet story. Worth watching." }] });
+    expect(await handleUpdate(callback(`ad:${id}`), WED_2159)).toBe("article added to draft");
+    const stories = await getStories(issue.id);
+    expect(stories).toHaveLength(9);
+    const added = stories.find((s) => s.article_id === id)!;
+    expect(added.position).toBe(9);
+    expect(added.commentary).toBe("Exports are the quiet story. Worth watching.");
+    expect(added.approved_at).toBeNull();
+    expect((await issueStatus(issue.id)).status).toBe("pending_approval");
+    expect(calls.gemini.some((g) => g.prompt.includes("Hand-picked story about Indian SaaS exports"))).toBe(true);
+  });
+
+  it("refuses beyond 10 stories, and brings a reserve back without a new Gemini call", async () => {
+    const full = await makeDraft({ n: 10, reserves: 1 });
+    const [reserve] = await getStories(full.id, ["reserve"]);
+    const extra = await addArticle("One story too many", { topic: "Fintech" });
+    expect(await handleUpdate(callback(`ad:${extra}`), WED_2159)).toMatch(/refused: The draft already has 10 stories/);
+    const [s1] = await getStories(full.id);
+    await sql`UPDATE issue_stories SET state = 'rejected', position = NULL WHERE id = ${s1.id}`;
+    expect(await handleUpdate(callback(`ad:${reserve.article_id}`), WED_2159)).toBe("article added to draft");
+    expect(calls.gemini).toHaveLength(0);
+    expect((await getStories(full.id)).some((s) => s.id === reserve.id)).toBe(true);
+  });
+});

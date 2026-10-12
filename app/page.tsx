@@ -44,7 +44,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <Paper page={page} tabs={tabs} notice={notice}>
             {page === "overview" && <Overview d={d} />}
             {page === "draft" && <DraftPage d={d} admin={admin} />}
-            {page === "articles" && <ArticlesPage d={d} sp={sp} />}
+            {page === "articles" && <ArticlesPage d={d} sp={sp} admin={admin} />}
             {page === "voice" && <VoicePage d={d} admin={admin} />}
             {page === "subscribers" && <SubscribersPage d={d} admin={admin} />}
           </Paper>
@@ -305,7 +305,7 @@ function EventRows({ events }: { events: D["events"] }) {
 // ---------------------------------------------------------------------------
 // Page 3 — articles
 // ---------------------------------------------------------------------------
-function ArticlesPage({ d, sp }: { d: D; sp: SP }) {
+function ArticlesPage({ d, sp, admin }: { d: D; sp: SP; admin: boolean }) {
   return (
     <>
       <section className="page-head"><div>
@@ -345,6 +345,13 @@ function ArticlesPage({ d, sp }: { d: D; sp: SP }) {
                   <dt>Topic</dt><dd>{a.topic ?? "—"} {a.topic_method && <span className="muted">({a.topic_method}{a.topic_confidence != null ? `, ${Math.round(a.topic_confidence * 100)}%` : ""})</span>}</dd>
                   <dt>Fetched</dt><dd>{formatIst(a.fetched_at)}</dd>
                 </dl>
+                {admin ? (
+                  <form className="row-actions" method="post" action="/api/admin/action">
+                    <input type="hidden" name="action" value="article_to_telegram" /><input type="hidden" name="article_id" value={a.id} />
+                    <button className="btn" type="submit">📨 Send to Telegram</button>
+                    <span className="small muted">Shreya gets it with a ➕ Add to draft button.</span>
+                  </form>
+                ) : <p className="small muted">Log in via “Run manually” to send this article to Telegram.</p>}
               </div>
             </details>
           );
